@@ -4,7 +4,7 @@
 
 Run the [SunFounder Pironman 5](https://www.sunfounder.com/) case features on
 [Recalbox](https://www.recalbox.com/): OLED status screen, case fans and RGB
-LEDs, on a Raspberry Pi 5.
+LEDs, on a Raspberry Pi 5. Pironman 5 and Pironman 5 Max are supported.
 
 The official Pironman 5 installer targets Raspberry Pi OS (apt, systemd,
 virtualenv in `/opt`, InfluxDB) and cannot run on Recalbox. This project
@@ -38,6 +38,8 @@ survives reboots and Recalbox upgrades.
 | Recalbox menu | LEDs, case fans and screen are set from *Menu > User scripts*, applied immediately and confirmed on the OLED |
 | LED color per system | During a game, the LEDs take the color of the console maker (Nintendo red, Sega blue…) |
 | Case fans | Follow the Raspberry Pi 5 fan: switched on from about 50 °C by default, five modes available |
+| Case fan LEDs (Max) | Follow the fans, or always on, or always off |
+| Screensaver sync | OLED and RGB LEDs switch off while the EmulationStation screensaver runs |
 | RGB LEDs | 4 WS2812 LEDs: solid, breathing, flow, rainbow, hue cycle; color, brightness and speed configurable |
 | Raspberry Pi 5 fan | Left to the Recalbox kernel driver, as on a stock system |
 | Footprint | About 2 % of one CPU core and 30 MB of RAM, running at low priority so games keep precedence |
@@ -48,10 +50,9 @@ survives reboots and Recalbox upgrades.
 |---|---|
 | Recalbox | 11.0 (tested on `11.0-patron-1.1`) |
 | Board | Raspberry Pi 5 |
-| Case | Pironman 5 |
+| Case | Pironman 5, Pironman 5 Max |
 
-Not supported: Pironman 5 Mini, Max, Pro Max and NAS, other Raspberry Pi
-models.
+Not supported: Pironman 5 Mini, Pro Max and NAS, other Raspberry Pi models.
 
 ## Installation
 
@@ -73,6 +74,12 @@ Connect to the Recalbox with SSH and run:
 ```bash
 wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/main-pr5-rc/recalbox/install.sh | bash
 ```
+
+The installer asks for the case model (both read "Pironman 5" in their
+EEPROM): type `1` for the Pironman 5 or `2` for the Pironman 5 Max, then
+confirm. To skip the question, add `-s -- --variant base` or
+`-s -- --variant max` after `bash`. On an upgrade, the model already
+installed is the default.
 
 The service starts immediately: the OLED screen, the RGB LEDs and the case
 fans come on within a few seconds.
@@ -118,8 +125,10 @@ brackets and the result it produces:
 | `Pironman · LEDs · brightness (25 %) → 50 %` | 25, 50, 75 or 100 % |
 | `Pironman · LEDs · per system → enable` | LED color per console maker during games |
 | `Pironman · LEDs · style (flow) → rainbow` | solid, breathing, flow, rainbow, hue cycle |
+| `Pironman · Case fans · LEDs (follow fans) → on` | case fan LEDs: follow the fans, on, off (Max only) |
 | `Pironman · Case fans · mode (performance) → cool` | always on, performance, cool, balanced, quiet |
 | `Pironman · Screen · power → turn off` | OLED screen on or off |
+| `Pironman · Screensaver · sync → disable` | OLED and LEDs off during the EmulationStation screensaver |
 
 Changes apply immediately and are saved. The OLED confirms each one for
 3 seconds, and the Recalbox message repeats the entry name. Entries are
@@ -163,6 +172,8 @@ the service.
 | `gpio_fan_mode` | case fans: `0` always on, `1` performance, `2` cool, `3` balanced, `4` quiet | `1` |
 | `oled_game_page` | `true`, `false`: now playing page during games | `true` |
 | `rgb_system_colors` | `true`, `false`: LED color per console maker during games | `true` |
+| `sleep_sync` | `true`, `false`: OLED and RGB LEDs off during the screensaver | `true` |
+| `gpio_fan_led` | `follow`, `on`, `off`: case fan LEDs (Max) | `follow` |
 | `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 
 `gpio_fan_mode` sets the Raspberry Pi 5 fan level from which the case fans

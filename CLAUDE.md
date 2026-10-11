@@ -34,7 +34,8 @@ Recalbox menu > User scripts → userscripts/manual/Pironman · *.sh
 ```
 
 Installed in `/recalbox/share/pironman5` (`app/`, `lib/`, `config.json`,
-`logs/`). Only the `pironman5` "base" variant (Pironman 5) is supported.
+`logs/`). Supported cases: Pironman 5 (`base`) and Pironman 5 Max (`max`),
+chosen at install time and stored in `PM5_HOME/variant`.
 
 ## Checks before committing
 
