@@ -238,8 +238,6 @@ def main():
     redirect_log(service.log)
     service.log.info('Recalbox launcher: PM5_HOME=%s', PM5_HOME)
 
-    from pm5r.control import patch_fan_addon
-    patch_fan_addon()  # before the addons are created
     app = service.Pironman5(config_path=CONFIG_PATH)
     start_oled_page_rotation(app)
     start_recalbox_integration(app, service.log)

@@ -38,7 +38,7 @@ survives reboots and Recalbox upgrades.
 | Recalbox menu | LEDs, case fans and screen are set from *Menu > User scripts*, applied immediately and confirmed on the OLED |
 | LED color per system | During a game, the LEDs take the color of the console maker (Nintendo red, Sega blue…) |
 | Case fans | Follow the Raspberry Pi 5 fan: switched on from about 50 °C by default, five modes available |
-| Case fan LEDs (Max) | Follow the fans, like the RGB LEDs, always on or always off |
+| Case fan LEDs (Max) | On or off from the Recalbox menu (they run their own color effect) |
 | Screensaver sync | OLED and RGB LEDs switch off while the EmulationStation screensaver runs |
 | RGB LEDs | 4 WS2812 LEDs: solid, breathing, flow, rainbow, hue cycle; color, brightness and speed configurable |
 | Raspberry Pi 5 fan | Left to the Recalbox kernel driver, as on a stock system |
@@ -125,7 +125,7 @@ brackets and the result it produces:
 | `Pironman · LEDs · brightness (25 %) → 50 %` | 25, 50, 75 or 100 % |
 | `Pironman · LEDs · per system → enable` | LED color per console maker during games |
 | `Pironman · LEDs · style (flow) → rainbow` | solid, breathing, flow, rainbow, hue cycle |
-| `Pironman · Case fans · LEDs (follow fans) → like RGB` | case fan LEDs: follow the fans, like the RGB LEDs, on, off (Max only) |
+| `Pironman · Case fans · LEDs → turn off` | case fan LEDs on or off (Max only) |
 | `Pironman · Case fans · mode (performance) → cool` | always on, performance, cool, balanced, quiet |
 | `Pironman · Screen · power → turn off` | OLED screen on or off |
 | `Pironman · Screensaver · sync → disable` | OLED and LEDs off during the EmulationStation screensaver |
@@ -173,7 +173,7 @@ the service.
 | `oled_game_page` | `true`, `false`: now playing page during games | `true` |
 | `rgb_system_colors` | `true`, `false`: LED color per console maker during games | `true` |
 | `sleep_sync` | `true`, `false`: OLED and RGB LEDs off during the screensaver | `true` |
-| `gpio_fan_led` | `follow`, `rgb` (like the RGB LEDs), `on`, `off`: case fan LEDs (Max) | `follow` |
+| `gpio_fan_led` | `on`, `off`: case fan LEDs (Max) | `on` |
 | `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 
 `gpio_fan_mode` sets the Raspberry Pi 5 fan level from which the case fans
@@ -244,6 +244,8 @@ installed.
 - The Raspberry Pi 5 power button stays under Recalbox control: OLED pages
   rotate automatically instead of changing with the button.
 - Disk temperatures are not displayed.
+- The Pironman 5 Max case fan LEDs run their own color effect: they can be
+  switched on or off, not set to a color.
 - EmulationStation cannot display custom notifications: the menu entry names
   carry the information, and are refreshed when *User scripts* is reopened.
 - Enabling the Recalbox `hat.wpaf` fan/OLED support or GPIO controllers

@@ -12,7 +12,7 @@ DEFAULTS = {
     'oled_game_page': True,
     'rgb_system_colors': True,
     'sleep_sync': True,
-    'gpio_fan_led': 'follow',
+    'gpio_fan_led': 'on',
 }
 
 # Case models supported on Recalbox (pironman5 product keys)
@@ -24,7 +24,6 @@ RGB_COLORS = ['#ffffff', '#ff0000', '#ff6000', '#ffd000', '#00ff00',
               '#00d0ff', '#0040ff', '#a000ff', '#ff00a0']
 RGB_BRIGHTNESS = [25, 50, 75, 100]
 FAN_MODES = [0, 1, 2, 3, 4]
-FAN_LED_MODES = ['follow', 'rgb', 'on', 'off']
 
 # setting key -> values cycled by the menu scripts (booleans are toggled)
 CYCLES = {
@@ -32,7 +31,6 @@ CYCLES = {
     'rgb_color': RGB_COLORS,
     'rgb_brightness': RGB_BRIGHTNESS,
     'gpio_fan_mode': FAN_MODES,
-    'gpio_fan_led': FAN_LED_MODES,
 }
 TOGGLES = ['rgb_enable', 'rgb_system_colors', 'oled_enable', 'oled_game_page',
            'sleep_sync']
@@ -44,7 +42,6 @@ TEXTS = {
         'rgb_system_colors': 'Couleur système', 'gpio_fan_mode': 'Ventilateurs',
         'oled_enable': 'Écran', 'oled_game_page': 'Page En jeu',
         'gpio_fan_led': 'LEDs ventilateurs', 'sleep_sync': 'Veille synchronisée',
-        'follow': 'suivre', 'rgb': 'comme les RGB',
         'on': 'allumées', 'off': 'éteintes', 'yes': 'oui', 'no': 'non',
         'screen_on': 'allumé', 'screen_off': 'éteint',
         'solid': 'fixe', 'breathing': 'respiration', 'flow': 'défilement',
@@ -63,7 +60,6 @@ TEXTS = {
         'rgb_system_colors': 'System color', 'gpio_fan_mode': 'Case fans',
         'oled_enable': 'Screen', 'oled_game_page': 'Now playing page',
         'gpio_fan_led': 'Fan LEDs', 'sleep_sync': 'Screensaver sync',
-        'follow': 'follow fans', 'rgb': 'like RGB',
         'on': 'on', 'off': 'off', 'yes': 'yes', 'no': 'no',
         'screen_on': 'on', 'screen_off': 'off',
         'solid': 'solid', 'breathing': 'breathing', 'flow': 'flow',

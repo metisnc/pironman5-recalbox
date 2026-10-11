@@ -55,8 +55,9 @@ def test_menu_entries_name_the_result():
     assert entries['Veille · synchronisation → désactiver'] == ['set', 'sleep_sync', 'false']
     assert len(entries) == 8  # no fan LED entry on a Pironman 5
     max_entries = menu.entries(dict(system, gpio_fan_led='follow'), 'fr', 'max')
-    assert max_entries['Ventilateurs · LEDs (suivre) → comme les RGB'] == \
-        ['set', 'gpio_fan_led', '"rgb"']
+    assert max_entries['Ventilateurs · LEDs → éteindre'] == ['set', 'gpio_fan_led', '"off"']
+    off_entries = menu.entries(dict(system, gpio_fan_led='off'), 'fr', 'max')
+    assert off_entries['Ventilateurs · LEDs → allumer'] == ['set', 'gpio_fan_led', '"on"']
     assert len(max_entries) == 9
     for lang in ('fr', 'en'):
         for name in menu.entries(system, lang):
@@ -72,6 +73,7 @@ def _all_states():
     for key in menu.TOGGLED:
         for value in (True, False):
             states.append({key: value})
+    states += [{'gpio_fan_led': 'on'}, {'gpio_fan_led': 'off'}]
     return states
 
 
@@ -371,52 +373,18 @@ def test_launcher_selects_max_variant():
     assert 'gpio_fan_led' not in variants.PERIPHERALS
 
 
-def test_fan_led_rgb_mode(tmp_path, monkeypatch):
-    integration, app, _, _, _, _ = make_integration(tmp_path, monkeypatch)
-    fan = FakeAddon()
-    app.pm_auto.addons.addons['fan'] = fan
-    app.peripherals = ['gpio_fan_state', 'gpio_fan_led']
-    system = app.config['system']
-    system.update({'gpio_fan_led': 'rgb', 'rgb_enable': True, 'sleep_sync': True})
-    assert integration.fan_led_value() == 'on'
-    system['rgb_enable'] = False
-    assert integration.fan_led_value() == 'off'
-    system['rgb_enable'] = True
-    integration.games.sleeping = True  # screensaver
-    assert integration.fan_led_value() == 'off'
-    system['gpio_fan_led'] = 'follow'
-    assert integration.fan_led_value() == 'follow'
-    # applied directly to the fan addon, never saved as on/off
-    integration.games.sleeping = False
-    system['gpio_fan_led'] = 'rgb'
-    integration._apply_fan_led()
-    assert fan.calls[-1] == {'gpio_fan_led': 'on'}
-
-
-def test_fan_led_change_is_not_passed_to_pm_auto(tmp_path, monkeypatch):
+def test_fan_led_on_off(tmp_path, monkeypatch):
     integration, app, config, updates, _, _ = make_integration(tmp_path, monkeypatch)
     fan = FakeAddon()
     app.pm_auto.addons.addons['fan'] = fan
-    app.peripherals = ['gpio_fan_led']
+    app.peripherals = ['gpio_fan_state', 'gpio_fan_led']
     integration.restart_only.discard('gpio_fan_led')
     data = json.loads(config.read_text())
-    data['system']['gpio_fan_led'] = 'rgb'
+    data['system']['gpio_fan_led'] = 'off'
     config.write_text(json.dumps(data))
     os.utime(config, (40, 40))
     integration.poll()
-    assert updates == []  # pm_auto would save 'on'/'off' instead of 'rgb'
-    assert fan.calls == [{'gpio_fan_led': 'on'}]
-    assert app.config['system']['gpio_fan_led'] == 'rgb'
-
-
-def test_patch_fan_addon_accepts_rgb(monkeypatch):
-    pytest.importorskip('pm_auto')
-    import pm_auto.addons.fan as fan
-    from pm5r import control
-    seen = []
-    monkeypatch.setattr(fan.FanAddon, 'update_config',
-                        lambda self, config, init=False: seen.append(config))
-    control.patch_fan_addon()
-    fan.FanAddon.update_config(None, {'gpio_fan_led': 'rgb', 'rgb_enable': False}, init=True)
-    fan.FanAddon.update_config(None, {'gpio_fan_led': 'on'}, init=True)
-    assert seen == [{'gpio_fan_led': 'off', 'rgb_enable': False}, {'gpio_fan_led': 'on'}]
+    assert updates == []  # sent to the fan addon only
+    assert fan.calls == [{'gpio_fan_led': 'off'}]
+    app.config['system']['gpio_fan_led'] = 'rgb'  # old value: treated as on
+    assert integration.fan_led_value() == 'on'

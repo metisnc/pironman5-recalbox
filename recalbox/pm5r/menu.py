@@ -31,7 +31,7 @@ NAMES = {
         'rgb_system_colors': ('LEDs · selon le système', 'activer', 'désactiver'),
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Ventilateurs · mode',
-        'gpio_fan_led': 'Ventilateurs · LEDs',
+        'gpio_fan_led': ('Ventilateurs · LEDs', 'allumer', 'éteindre'),
         'sleep_sync': ('Veille · synchronisation', 'activer', 'désactiver'),
         'oled_enable': ('Écran · allumage', 'allumer', 'éteindre'),
     },
@@ -42,13 +42,13 @@ NAMES = {
         'rgb_system_colors': ('LEDs · per system', 'enable', 'disable'),
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Case fans · mode',
-        'gpio_fan_led': 'Case fans · LEDs',
+        'gpio_fan_led': ('Case fans · LEDs', 'turn on', 'turn off'),
         'sleep_sync': ('Screensaver · sync', 'enable', 'disable'),
         'oled_enable': ('Screen · power', 'turn on', 'turn off'),
     },
 }
 ARROW = ' → '
-CYCLED = ['rgb_style', 'rgb_color', 'rgb_brightness', 'gpio_fan_mode', 'gpio_fan_led']
+CYCLED = ['rgb_style', 'rgb_color', 'rgb_brightness', 'gpio_fan_mode']
 TOGGLED = ['rgb_enable', 'rgb_system_colors', 'oled_enable', 'sleep_sync']
 
 
@@ -57,8 +57,6 @@ def entries(system, lang, variant='base'):
     names = NAMES.get(lang, NAMES['en'])
     result = {}
     for key in CYCLED:
-        if key == 'gpio_fan_led' and variant not in settings.FAN_LED_VARIANTS:
-            continue
         current = settings.get(system, key)
         value = settings.next_value(key, current)
         now = settings.label(lang, key, current)[1] if current is not None else '?'
@@ -70,6 +68,12 @@ def entries(system, lang, variant='base'):
         current = bool(settings.get(system, key))
         result[fixed + ARROW + (turn_off if current else turn_on)] = \
             ['set', key, json.dumps(not current)]
+    if variant in settings.FAN_LED_VARIANTS:
+        # Case fan LEDs (Max): on/off only, their colors cannot be driven
+        fixed, turn_on, turn_off = names['gpio_fan_led']
+        lit = settings.get(system, 'gpio_fan_led') != 'off'
+        result[fixed + ARROW + (turn_off if lit else turn_on)] = \
+            ['set', 'gpio_fan_led', json.dumps('off' if lit else 'on')]
     return result
 
 
