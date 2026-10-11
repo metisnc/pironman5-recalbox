@@ -67,7 +67,7 @@ Pironman 5 and loads its device tree overlay (I2C and SPI) automatically.
 Connect to the Recalbox with SSH and run:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/v1/recalbox/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/main-pr5-rc/recalbox/install.sh | bash
 ```
 
 The service starts immediately: the OLED screen, the RGB LEDs and the case
@@ -92,7 +92,7 @@ settings.
 On a computer with Internet access, Python 3 and Git:
 
 ```bash
-git clone -b v1 https://github.com/metisnc/pironman5-recalbox.git
+git clone -b main-pr5-rc https://github.com/metisnc/pironman5-recalbox.git
 bash pironman5-recalbox/recalbox/build-offline-bundle.sh pironman5-offline
 scp -r pironman5-recalbox pironman5-offline root@recalbox.local:/recalbox/share/
 ssh root@recalbox.local \
