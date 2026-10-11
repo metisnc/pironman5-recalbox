@@ -1,13 +1,14 @@
 # Pironman 5 for Recalbox: development guide
 
-Recalbox-dedicated fork of [sunfounder/pironman5](https://github.com/sunfounder/pironman5).
+Recalbox port of [sunfounder/pironman5](https://github.com/sunfounder/pironman5),
+maintained independently (see [Upstream policy](#upstream-policy)).
 User docs: `README.md` (EN), `README.fr.md` (FR). Technical notes: `recalbox/README.md`.
 
 ## Repository
 
 | Path | Owner | Rule |
 |---|---|---|
-| `pironman5/` | SunFounder upstream | Do not modify: adapt at runtime in `recalbox/pironman5_recalbox.py` |
+| `pironman5/` | imported from SunFounder | Prefer adapting at runtime in `recalbox/pironman5_recalbox.py` over editing it |
 | `recalbox/` | this fork | All Recalbox code, scripts, tests and technical notes |
 | `README.md`, `README.fr.md` | this fork | Keep both languages in sync |
 
@@ -56,18 +57,14 @@ Validate: service starts, survives a reboot, OLED / LEDs / case fans work,
 a game runs normally, `uninstall.sh` restores the initial state. Never
 modify `/boot` or the rootfs on the test device.
 
-## Syncing with SunFounder
+## Upstream policy
 
-```bash
-git remote add upstream https://github.com/sunfounder/pironman5.git  # once
-git fetch upstream
-git switch recalbox-port
-git merge upstream/v1
-```
+This project is maintained independently and is **not synchronized** with
+SunFounder: no `upstream` remote, never use GitHub's "Sync fork" and never
+merge `sunfounder/pironman5`. `pironman5/` is the code imported at fork time
+(version 1.3.20) and is only changed here.
 
-Files removed in this fork (Raspberry Pi OS installer, Docker, scripts,
-overlays, upstream tests, docs) come back as modify/delete conflicts: keep
-them deleted with `git rm <path>`. Only `pironman5/` changes are relevant:
-check that `recalbox/pironman5_recalbox.py` still matches the upstream API
-(`Pironman5(config_path=...)`, `variants.PERIPHERALS`, `pm_auto` addons),
-then test on a Recalbox before merging into `v1`.
+`pm_auto` and `sf_rpi_status` are pinned to fixed commits in
+`recalbox/install.sh` (`PM_AUTO_COMMIT`, `SF_RPI_STATUS_COMMIT`): SunFounder
+changes never reach installations. Bump a pin only on purpose, after testing
+on a Recalbox.
