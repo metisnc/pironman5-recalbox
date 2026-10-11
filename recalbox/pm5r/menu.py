@@ -31,6 +31,8 @@ NAMES = {
         'rgb_system_colors': ('LEDs · selon le système', 'activer', 'désactiver'),
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Ventilateurs · mode',
+        'gpio_fan_led': 'Ventilateurs · LEDs',
+        'sleep_sync': ('Veille · synchronisation', 'activer', 'désactiver'),
         'oled_enable': ('Écran · allumage', 'allumer', 'éteindre'),
     },
     'en': {
@@ -40,19 +42,23 @@ NAMES = {
         'rgb_system_colors': ('LEDs · per system', 'enable', 'disable'),
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Case fans · mode',
+        'gpio_fan_led': 'Case fans · LEDs',
+        'sleep_sync': ('Screensaver · sync', 'enable', 'disable'),
         'oled_enable': ('Screen · power', 'turn on', 'turn off'),
     },
 }
 ARROW = ' → '
-CYCLED = ['rgb_style', 'rgb_color', 'rgb_brightness', 'gpio_fan_mode']
-TOGGLED = ['rgb_enable', 'rgb_system_colors', 'oled_enable']
+CYCLED = ['rgb_style', 'rgb_color', 'rgb_brightness', 'gpio_fan_mode', 'gpio_fan_led']
+TOGGLED = ['rgb_enable', 'rgb_system_colors', 'oled_enable', 'sleep_sync']
 
 
-def entries(system, lang):
+def entries(system, lang, variant='base'):
     """{menu name: pironman5ctl arguments} for the current settings."""
     names = NAMES.get(lang, NAMES['en'])
     result = {}
     for key in CYCLED:
+        if key == 'gpio_fan_led' and variant not in settings.FAN_LED_VARIANTS:
+            continue
         current = settings.get(system, key)
         value = settings.next_value(key, current)
         now = settings.label(lang, key, current)[1] if current is not None else '?'
@@ -87,7 +93,7 @@ def installed(directory=MANUAL_SCRIPTS):
             if is_ours(os.path.join(directory, name))]
 
 
-def refresh(system, lang, directory=MANUAL_SCRIPTS, create=False):
+def refresh(system, lang, directory=MANUAL_SCRIPTS, create=False, variant=None):
     """Rename the entries to match the settings.
 
     Only touches files carrying MARKER. Does nothing unless entries are
@@ -97,8 +103,9 @@ def refresh(system, lang, directory=MANUAL_SCRIPTS, create=False):
     if not current and not create:
         return 0
     os.makedirs(directory, exist_ok=True)
+    variant = variant or settings.variant()
     wanted = {f'{PREFIX}{name}.sh': script_body(args)
-              for name, args in entries(system, lang).items()}
+              for name, args in entries(system, lang, variant).items()}
     for name in current:
         if name not in wanted:
             os.remove(os.path.join(directory, name))

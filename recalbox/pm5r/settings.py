@@ -11,13 +11,20 @@ DEFAULTS = {
     'oled_page_interval': 10,
     'oled_game_page': True,
     'rgb_system_colors': True,
+    'sleep_sync': True,
+    'gpio_fan_led': 'follow',
 }
+
+# Case models supported on Recalbox (pironman5 product keys)
+VARIANTS = ('base', 'max')
+FAN_LED_VARIANTS = ('max',)  # case fan LEDs on GPIO5
 
 RGB_STYLES = ['solid', 'breathing', 'flow', 'rainbow', 'hue_cycle']
 RGB_COLORS = ['#ffffff', '#ff0000', '#ff6000', '#ffd000', '#00ff00',
               '#00d0ff', '#0040ff', '#a000ff', '#ff00a0']
 RGB_BRIGHTNESS = [25, 50, 75, 100]
 FAN_MODES = [0, 1, 2, 3, 4]
+FAN_LED_MODES = ['follow', 'on', 'off']
 
 # setting key -> values cycled by the menu scripts (booleans are toggled)
 CYCLES = {
@@ -25,8 +32,10 @@ CYCLES = {
     'rgb_color': RGB_COLORS,
     'rgb_brightness': RGB_BRIGHTNESS,
     'gpio_fan_mode': FAN_MODES,
+    'gpio_fan_led': FAN_LED_MODES,
 }
-TOGGLES = ['rgb_enable', 'rgb_system_colors', 'oled_enable', 'oled_game_page']
+TOGGLES = ['rgb_enable', 'rgb_system_colors', 'oled_enable', 'oled_game_page',
+           'sleep_sync']
 
 TEXTS = {
     'fr': {
@@ -34,6 +43,8 @@ TEXTS = {
         'rgb_brightness': 'Luminosité', 'rgb_enable': 'LEDs',
         'rgb_system_colors': 'Couleur système', 'gpio_fan_mode': 'Ventilateurs',
         'oled_enable': 'Écran', 'oled_game_page': 'Page En jeu',
+        'gpio_fan_led': 'LEDs ventilateurs', 'sleep_sync': 'Veille synchronisée',
+        'follow': 'suivre',
         'on': 'allumées', 'off': 'éteintes', 'yes': 'oui', 'no': 'non',
         'screen_on': 'allumé', 'screen_off': 'éteint',
         'solid': 'fixe', 'breathing': 'respiration', 'flow': 'défilement',
@@ -51,6 +62,8 @@ TEXTS = {
         'rgb_brightness': 'Brightness', 'rgb_enable': 'LEDs',
         'rgb_system_colors': 'System color', 'gpio_fan_mode': 'Case fans',
         'oled_enable': 'Screen', 'oled_game_page': 'Now playing page',
+        'gpio_fan_led': 'Fan LEDs', 'sleep_sync': 'Screensaver sync',
+        'follow': 'follow fans',
         'on': 'on', 'off': 'off', 'yes': 'yes', 'no': 'no',
         'screen_on': 'on', 'screen_off': 'off',
         'solid': 'solid', 'breathing': 'breathing', 'flow': 'flow',
@@ -75,6 +88,17 @@ def language(conf_path=RECALBOX_CONF):
     except OSError:
         pass
     return 'en'
+
+
+def variant(home=None):
+    """Case model chosen at install time ('base' or 'max')."""
+    from . import PM5_HOME
+    try:
+        with open(os.path.join(home or PM5_HOME, 'variant')) as f:
+            value = f.read().strip()
+    except OSError:
+        return 'base'
+    return value if value in VARIANTS else 'base'
 
 
 def text(lang, key):

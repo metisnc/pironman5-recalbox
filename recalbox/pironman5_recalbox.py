@@ -191,6 +191,30 @@ def start_recalbox_integration(app, log):
     return integration
 
 
+def select_variant(variants, key):
+    """Assemble the pironman5 product `key` (upstream reads /opt/pironman5/.variant).
+
+    Must run before pironman5.pironman5 is imported: it copies NAME, ID and
+    PRODUCT_VERSION at import time. Lists and dicts are updated in place.
+    """
+    from pironman5.variants.modules import assemble
+    from pironman5.variants.products import PRODUCT_DEFINITIONS
+
+    product = PRODUCT_DEFINITIONS[key]
+    assembled = assemble(product['modules'])
+    variants.PERIPHERALS[:] = assembled['peripherals']
+    variants.SYSTEM_DEFAULT_CONFIG.clear()
+    variants.SYSTEM_DEFAULT_CONFIG.update(assembled['default_config'])
+    variants.SYSTEM_DEFAULT_CONFIG.update(product.get('config_overrides', {}))
+    variants.EVENT_MAP.clear()
+    variants.EVENT_MAP.update(assembled['event_map'])
+    variants.EVENT_MAP.update(product.get('event_map_overrides', {}))
+    variants.NAME = product['name']
+    variants.ID = product['id']
+    variants.PRODUCT_VERSION = product['product_version']
+    variants.VARIENT = key
+
+
 def main():
     os.makedirs(LOG_DIR, exist_ok=True)
     # The upstream logger opens /var/log/pironman5/pironman5.log at import time
@@ -198,6 +222,8 @@ def main():
     write_default_config()
 
     from pironman5 import variants
+    from pm5r import settings
+    select_variant(variants, settings.variant(PM5_HOME))
     for peripheral in EXCLUDED_PERIPHERALS:
         while peripheral in variants.PERIPHERALS:
             variants.PERIPHERALS.remove(peripheral)

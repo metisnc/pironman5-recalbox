@@ -20,9 +20,10 @@ from .es_events import GameWatcher
 COLORLESS_STYLES = {'rainbow', 'rainbow_reverse', 'hue_cycle'}
 # Keys applied after the OLED confirmation, since they switch the screen off
 DELAYED_OFF = {'oled_enable'}
-# Pin settings: pm_auto fails to change them while running (e.g. no fan LED
-# on the Pironman 5); they are saved and used at the next service start.
-RESTART_ONLY = {'gpio_fan_pin', 'gpio_fan_led', 'gpio_fan_led_pin'}
+# Pin settings: pm_auto fails to change them while running; they are saved
+# and used at the next service start. gpio_fan_led too on a case without
+# fan LEDs (Pironman 5): pm_auto would fail on the missing LED.
+RESTART_ONLY = {'gpio_fan_pin', 'gpio_fan_led_pin'}
 TOAST_SECONDS = 3
 
 
@@ -38,7 +39,11 @@ class Integration:
         self.lang = settings.language()
         self.toast = oled.Toast()
         self.systems = colors.load_systems()
-        self.games = GameWatcher(self._on_game_start, self._on_game_end, log)
+        self.games = GameWatcher(self._on_game_start, self._on_game_end, log,
+                                 on_sleep=self._on_sleep, on_wake=self._on_wake)
+        self.restart_only = set(RESTART_ONLY)
+        if 'gpio_fan_led' not in getattr(app, 'peripherals', []):
+            self.restart_only.add('gpio_fan_led')
         self._mtime = self._stat()
         self._stopping = threading.Event()
         self._thread = threading.Thread(target=self._run, name='recalbox-control', daemon=True)
@@ -151,10 +156,10 @@ class Integration:
     def apply(self, changes):
         """Apply changed settings live (runs in the asyncio loop thread)."""
         self.log.info('config.json changed: %s', changes)
-        restart_only = sorted(k for k in changes if k in RESTART_ONLY)
+        restart_only = sorted(k for k in changes if k in self.restart_only)
         if restart_only:
             self.log.info('Applied at next service start: %s', ', '.join(restart_only))
-        live = {k: v for k, v in changes.items() if k not in RESTART_ONLY}
+        live = {k: v for k, v in changes.items() if k not in self.restart_only}
         now = {k: v for k, v in live.items()
                if not (k in DELAYED_OFF and v is False)}
         later = {k: v for k, v in live.items() if k not in now}
@@ -177,6 +182,8 @@ class Integration:
             # Let the confirmation show before the screen goes off
             loop = self.app.pm_auto.loop
             loop.call_later(TOAST_SECONDS, self._safe, self._apply_later, later)
+        if self.games.sleeping:
+            self._apply_sleep()  # a change must not light up a sleeping case
         # Menu entry names show the result of the next action
         menu.refresh(self.system, self.lang, self.menu_dir)
 
@@ -189,6 +196,31 @@ class Integration:
                 self.poll()
             except Exception:
                 self.log.exception('config watcher error')
+
+    # ------------------------------------------------------------ screensaver
+    def _on_sleep(self):
+        self.in_loop(self._apply_sleep)
+
+    def _on_wake(self):
+        self.in_loop(self._apply_wake)
+
+    def _apply_sleep(self):
+        """EmulationStation screensaver: OLED and RGB LEDs off (not saved)."""
+        if not settings.get(self.system, 'sleep_sync'):
+            return
+        screen, leds = self.addon('oled'), self.addon('ws2812')
+        if screen is not None:
+            screen.sleep()
+        if leds is not None:
+            leds.update_config({'rgb_enable': False})
+
+    def _apply_wake(self):
+        screen, leds = self.addon('oled'), self.addon('ws2812')
+        if screen is not None and self.system.get('oled_enable', True):
+            screen.wake()
+            screen.last_page_index = -1
+        if leds is not None:
+            leds.update_config({'rgb_enable': self.system.get('rgb_enable', True)})
 
     # ------------------------------------------------------------ games
     def _on_game_start(self, game):

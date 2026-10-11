@@ -10,6 +10,7 @@
 # Usage (on the Recalbox, as root):
 #   bash install.sh                      # from a copy of the repository
 #   bash install.sh --offline <bundle>   # no Internet, see build-offline-bundle.sh
+#   bash install.sh --variant max        # case model without asking: base or max
 #   wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/main-pr5-rc/recalbox/install.sh | bash
 
 set -euo pipefail
@@ -29,9 +30,12 @@ PM_AUTO_COMMIT="117f66567c6b5b74e588a02fa5c192fc69624b1f"        # pm_auto v2
 SF_RPI_STATUS_COMMIT="06990abf5e72589257c74fe450012e02c253f59f"  # sf_rpi_status main
 
 OFFLINE_DIR=""
+VARIANT=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --offline) shift; OFFLINE_DIR="${1:-}" ;;
+        --variant) shift; VARIANT="${1:-}" ;;
+        --variant=*) VARIANT="${1#*=}" ;;
         -h|--help) sed -n '/^# Pironman 5 installer/,/^$/p' "$0"; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
@@ -57,6 +61,48 @@ if [ -n "$OFFLINE_DIR" ]; then
     [ -d "$OFFLINE_DIR/wheels" ] || die "offline bundle: $OFFLINE_DIR/wheels not found"
 fi
 log "Recalbox $(cat /recalbox/recalbox.version), $(python3 --version)"
+
+# ------------------------------------------------------------------ case model
+# The HAT EEPROM reads "Pironman 5" on both models: ask which one this is.
+variant_name() { case "$1" in max) echo "Pironman 5 Max" ;; *) echo "Pironman 5" ;; esac; }
+LANG_FR=false
+grep -q '^system.language=fr' /recalbox/share/system/recalbox.conf 2>/dev/null && LANG_FR=true
+say() { if [ "$LANG_FR" = true ]; then echo "$1"; else echo "$2"; fi; }
+
+DEFAULT_VARIANT=$(cat "$PM5_HOME/variant" 2>/dev/null || true)
+case "$DEFAULT_VARIANT" in base|max) ;; *) DEFAULT_VARIANT=base ;; esac
+
+if [ -n "$VARIANT" ]; then
+    case "$VARIANT" in base|max) ;; *) die "--variant must be base or max" ;; esac
+elif { exec 3</dev/tty; } 2>/dev/null; then
+    # Interactive, also through "wget ... | bash": read the keyboard, not stdin
+    default_choice=1; [ "$DEFAULT_VARIANT" = max ] && default_choice=2
+    while [ -z "$VARIANT" ]; do
+        echo
+        say "Quel modèle de boîtier ?" "Which case model?"
+        echo "  1) Pironman 5"
+        say "  2) Pironman 5 Max (LEDs sur les ventilateurs)" "  2) Pironman 5 Max (LEDs on the case fans)"
+        printf '%s' "$(say "Choix" "Choice") [$default_choice] : "
+        read -r choice <&3 || choice=""
+        case "${choice:-$default_choice}" in
+            1) candidate=base ;;
+            2) candidate=max ;;
+            *) say "Choix invalide, tapez 1 ou 2." "Invalid choice, type 1 or 2."; continue ;;
+        esac
+        printf '%s' "$(say "Installer pour le $(variant_name "$candidate") ? [O/n] " \
+                           "Install for the $(variant_name "$candidate")? [Y/n] ")"
+        read -r confirm <&3 || confirm=""
+        case "$confirm" in
+            ""|[oOyY]*) VARIANT=$candidate ;;
+            *) ;;  # ask again
+        esac
+    done
+    exec 3<&-
+else
+    VARIANT=$DEFAULT_VARIANT
+    log "No terminal: using $(variant_name "$VARIANT") (use --variant base|max to choose)"
+fi
+log "Case model: $(variant_name "$VARIANT")"
 
 WORK=$(mktemp -d /tmp/pironman5-install.XXXXXX)
 cleanup() {
@@ -155,6 +201,7 @@ for d in app lib; do
     cp -r "$STAGE/$d" "$PM5_HOME/$d"
 done
 mkdir -p "$PM5_HOME/logs"
+echo "$VARIANT" > "$PM5_HOME/variant"   # read by the launcher and the menu
 
 # ------------------------------------------------------------------ autostart
 if ! grep -qF "$MARK_BEGIN" "$CUSTOM_SH" 2>/dev/null; then
