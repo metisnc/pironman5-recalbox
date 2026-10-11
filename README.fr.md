@@ -20,6 +20,7 @@ système, et résiste aux redémarrages comme aux mises à jour de Recalbox.
 - [Fonctionnalités](#fonctionnalités)
 - [Compatibilité](#compatibilité)
 - [Installation](#installation)
+- [Menu Recalbox](#menu-recalbox)
 - [Configuration](#configuration)
 - [Gestion du service](#gestion-du-service)
 - [Désinstallation](#désinstallation)
@@ -34,6 +35,9 @@ système, et résiste aux redémarrages comme aux mises à jour de Recalbox.
 | Fonction | Détails |
 |---|---|
 | Écran OLED | Adresses IP (Ethernet et Wi-Fi), charge et température du CPU, RAM, occupation des disques ; les pages défilent automatiquement |
+| En jeu | Pendant une partie, l'OLED affiche le système, le titre, la durée de jeu, le CPU, la RAM et la température |
+| Menu Recalbox | LEDs, ventilateurs et écran se règlent depuis *Menu > Scripts utilisateur*, appliqués aussitôt et confirmés sur l'OLED |
+| Couleur par système | Pendant une partie, les LEDs prennent la couleur du constructeur de la console (Nintendo rouge, Sega bleu…) |
 | Ventilateurs du boîtier | Suivent le ventilateur du Raspberry Pi 5 : allumés à partir d'environ 50 °C par défaut, cinq modes disponibles |
 | LEDs RGB | 4 LEDs WS2812 : fixe, respiration, défilement, arc-en-ciel, cycle de teinte ; couleur, luminosité et vitesse réglables |
 | Ventilateur du Raspberry Pi 5 | Laissé au pilote du noyau Recalbox, comme sur un système d'origine |
@@ -104,11 +108,49 @@ ssh root@recalbox.local \
 
 Remplacez `recalbox.local` par l'adresse de votre Recalbox si nécessaire.
 
+## Menu Recalbox
+
+L'installateur ajoute des entrées dans **Menu > Scripts utilisateur**
+d'EmulationStation, nommées dans la langue de Recalbox. Chaque entrée indique
+la valeur actuelle entre parenthèses et le résultat qu'elle produit :
+
+| Entrée | Effet |
+|---|---|
+| `Pironman · LEDs · allumage → éteindre` | allume ou éteint les LEDs |
+| `Pironman · LEDs · couleur (cyan) → bleu` | couleur suivante : blanc, rouge, orange, jaune, vert, cyan, bleu, violet, rose |
+| `Pironman · LEDs · luminosité (25 %) → 50 %` | 25, 50, 75 ou 100 % |
+| `Pironman · LEDs · selon le système → activer` | couleur des LEDs selon le constructeur pendant les parties |
+| `Pironman · LEDs · style (défilement) → arc-en-ciel` | fixe, respiration, défilement, arc-en-ciel, cycle de couleurs |
+| `Pironman · Ventilateurs · mode (performance) → frais` | toujours, performance, frais, équilibré, silencieux |
+| `Pironman · Écran · allumage → éteindre` | allume ou éteint l'écran OLED |
+| `Pironman · État` | résumé sur l'OLED pendant 6 secondes |
+
+Les changements s'appliquent immédiatement et sont enregistrés. L'OLED
+confirme chacun pendant 3 secondes, et le message de Recalbox reprend le nom
+de l'entrée. Les entrées sont renommées après chaque changement et gardent
+leur place dans le menu : ressortez de *Scripts utilisateur* puis revenez-y
+pour voir les nouveaux noms (EmulationStation lit les noms à l'ouverture du
+menu).
+
+Pendant une partie, l'OLED affiche uniquement la page **En jeu** ; les pages
+habituelles reviennent en quittant le jeu. Avec *selon le système* activé,
+les LEDs prennent la couleur du constructeur (Nintendo rouge, Sega bleu, Sony
+violet, SNK cyan, NEC orange, Atari jaune, Bandai rose, Microsoft vert,
+arcade magenta) puis reviennent à votre couleur.
+
+Les mêmes réglages sont accessibles en SSH :
+
+```bash
+python3 /recalbox/share/pironman5/app/recalbox/pironman5ctl.py --help
+python3 /recalbox/share/pironman5/app/recalbox/pironman5ctl.py set rgb_brightness 50
+```
+
 ## Configuration
 
 Les réglages sont dans `/recalbox/share/pironman5/config.json`, accessible
 aussi via le partage réseau de Recalbox. Modifiez les valeurs de la section
-`system`, puis [redémarrez le service](#gestion-du-service).
+`system` : les changements sont appliqués en moins d'une seconde, sans
+redémarrer le service.
 
 | Clé | Valeurs | Défaut |
 |---|---|---|
@@ -124,6 +166,8 @@ aussi via le partage réseau de Recalbox. Modifiez les valeurs de la section
 | `oled_sleep_timeout` | secondes avant extinction de l'écran, `0` = jamais | `0` |
 | `temperature_unit` | `C`, `F` | `C` |
 | `gpio_fan_mode` | ventilateurs du boîtier : `0` toujours allumés, `1` performance, `2` frais, `3` équilibré, `4` silencieux | `1` |
+| `oled_game_page` | `true`, `false` : page En jeu pendant les parties | `true` |
+| `rgb_system_colors` | `true`, `false` : couleur des LEDs selon le constructeur pendant les parties | `true` |
 | `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 
 `gpio_fan_mode` fixe le niveau du ventilateur du Raspberry Pi 5 à partir
@@ -152,7 +196,8 @@ bash /recalbox/share/pironman5/app/recalbox/uninstall.sh
 ```
 
 La désinstallation arrête le service (écran, LEDs et ventilateurs du boîtier
-éteints), retire l'entrée de démarrage de `custom.sh` et déplace
+éteints), retire les entrées du menu et l'entrée de démarrage de
+`custom.sh`, et déplace
 l'installation dans `/recalbox/share/pironman5-backups/uninstall-<date>/`.
 Rien n'est supprimé : effacez vous-même `/recalbox/share/pironman5-backups`
 quand vous n'en avez plus besoin.
@@ -184,7 +229,8 @@ plus tant qu'une version adaptée de ce projet n'aura pas été installée.
 | L'écran OLED reste noir | `cat /proc/device-tree/hat/product` affiche `Pironman 5` ; `i2cdetect -y 1` affiche `3c` |
 | Les LEDs RGB restent éteintes | `ls /dev/spidev0.0` ; `rgb_enable` et `rgb_brightness` dans `config.json` |
 | Les ventilateurs du boîtier ne s'arrêtent jamais | `gpio_fan_mode` vaut `0` (toujours allumés) |
-| Les réglages sont ignorés | `config.json` est un JSON valide ; redémarrez le service après modification |
+| Les réglages sont ignorés | `config.json` est un JSON valide (voir `logs/pironman5.log`) |
+| Entrées du menu absentes | lancez `pironman5ctl.py install-scripts`, puis rouvrez *Scripts utilisateur* |
 
 ## Limites
 
@@ -193,6 +239,9 @@ plus tant qu'une version adaptée de ce projet n'aura pas été installée.
 - Le bouton d'alimentation du Raspberry Pi 5 reste géré par Recalbox : les
   pages de l'OLED défilent automatiquement au lieu de changer avec le bouton.
 - Les températures des disques ne sont pas affichées.
+- EmulationStation ne sait pas afficher de notification personnalisée : les
+  noms des entrées du menu portent l'information, et se mettent à jour à la
+  réouverture de *Scripts utilisateur*.
 - Activer la prise en charge `hat.wpaf` (ventilateur/OLED) de Recalbox ou les
   manettes GPIO (`controllers.gpio`) entre en conflit avec ce service (bus
   I2C et broches GPIO partagés).
@@ -202,7 +251,8 @@ plus tant qu'une version adaptée de ce projet n'aura pas été installée.
 Le service exécute le logiciel officiel SunFounder `pironman5`, sans
 modification, via un lanceur qui l'adapte à Recalbox : réglages et journaux
 sur la partition share, pas de systemd, pas de `lsblk`, système de fichiers
-exFAT. Détails techniques (en anglais) :
+exFAT, ainsi que l'intégration à Recalbox (entrées du menu, événements de
+jeu d'EmulationStation). Détails techniques (en anglais) :
 [recalbox/README.md](recalbox/README.md).
 
 | Chemin | Contenu |

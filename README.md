@@ -19,6 +19,7 @@ survives reboots and Recalbox upgrades.
 - [Features](#features)
 - [Compatibility](#compatibility)
 - [Installation](#installation)
+- [Recalbox menu](#recalbox-menu)
 - [Configuration](#configuration)
 - [Service management](#service-management)
 - [Uninstallation](#uninstallation)
@@ -33,6 +34,9 @@ survives reboots and Recalbox upgrades.
 | Feature | Details |
 |---|---|
 | OLED screen | IP addresses (Ethernet and Wi-Fi), CPU load and temperature, RAM, disk usage; pages rotate automatically |
+| Now playing | During a game, the OLED shows the system, the title, the play time, CPU, RAM and temperature |
+| Recalbox menu | LEDs, case fans and screen are set from *Menu > User scripts*, applied immediately and confirmed on the OLED |
+| LED color per system | During a game, the LEDs take the color of the console maker (Nintendo red, Sega blue…) |
 | Case fans | Follow the Raspberry Pi 5 fan: switched on from about 50 °C by default, five modes available |
 | RGB LEDs | 4 WS2812 LEDs: solid, breathing, flow, rainbow, hue cycle; color, brightness and speed configurable |
 | Raspberry Pi 5 fan | Left to the Recalbox kernel driver, as on a stock system |
@@ -101,11 +105,48 @@ ssh root@recalbox.local \
 
 Replace `recalbox.local` with the address of your Recalbox if needed.
 
+## Recalbox menu
+
+The installer adds entries to **Menu > User scripts** in EmulationStation,
+named in the Recalbox language. Each entry shows the current value in
+brackets and the result it produces:
+
+| Entry | Effect |
+|---|---|
+| `Pironman · LEDs · power → turn off` | LEDs on or off |
+| `Pironman · LEDs · color (cyan) → blue` | next color: white, red, orange, yellow, green, cyan, blue, purple, pink |
+| `Pironman · LEDs · brightness (25 %) → 50 %` | 25, 50, 75 or 100 % |
+| `Pironman · LEDs · per system → enable` | LED color per console maker during games |
+| `Pironman · LEDs · style (flow) → rainbow` | solid, breathing, flow, rainbow, hue cycle |
+| `Pironman · Case fans · mode (performance) → cool` | always on, performance, cool, balanced, quiet |
+| `Pironman · Screen · power → turn off` | OLED screen on or off |
+| `Pironman · Status` | summary on the OLED for 6 seconds |
+
+Changes apply immediately and are saved. The OLED confirms each one for
+3 seconds, and the Recalbox message repeats the entry name. Entries are
+renamed after each change and keep their place in the menu: leave and reopen
+*User scripts* to see the new names (EmulationStation reads the names when
+the menu opens).
+
+During a game, the OLED only shows the **now playing** page; the usual pages
+come back when you leave the game. With *per system* enabled, the LEDs use
+the color of the console maker (Nintendo red, Sega blue, Sony purple, SNK
+cyan, NEC orange, Atari yellow, Bandai pink, Microsoft green, arcade
+magenta) and go back to your color afterwards.
+
+The same settings can be changed over SSH:
+
+```bash
+python3 /recalbox/share/pironman5/app/recalbox/pironman5ctl.py --help
+python3 /recalbox/share/pironman5/app/recalbox/pironman5ctl.py set rgb_brightness 50
+```
+
 ## Configuration
 
 Settings are stored in `/recalbox/share/pironman5/config.json`, which you can
 also reach through the Recalbox network share. Edit the values in the
-`system` section, then [restart the service](#service-management).
+`system` section: changes are applied within a second, without restarting
+the service.
 
 | Key | Values | Default |
 |---|---|---|
@@ -121,6 +162,8 @@ also reach through the Recalbox network share. Edit the values in the
 | `oled_sleep_timeout` | seconds before the screen turns off, `0` = never | `0` |
 | `temperature_unit` | `C`, `F` | `C` |
 | `gpio_fan_mode` | case fans: `0` always on, `1` performance, `2` cool, `3` balanced, `4` quiet | `1` |
+| `oled_game_page` | `true`, `false`: now playing page during games | `true` |
+| `rgb_system_colors` | `true`, `false`: LED color per console maker during games | `true` |
 | `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 
 `gpio_fan_mode` sets the Raspberry Pi 5 fan level from which the case fans
@@ -149,7 +192,8 @@ bash /recalbox/share/pironman5/app/recalbox/uninstall.sh
 ```
 
 The uninstaller stops the service (screen, LEDs and case fans are switched
-off), removes the startup entry from `custom.sh` and moves the installation
+off), removes the menu entries and the startup entry from `custom.sh`, and
+moves the installation
 to `/recalbox/share/pironman5-backups/uninstall-<date>/`. Nothing is deleted:
 remove `/recalbox/share/pironman5-backups` yourself once you no longer need
 it.
@@ -180,7 +224,8 @@ installed.
 | OLED screen stays black | `cat /proc/device-tree/hat/product` shows `Pironman 5`; `i2cdetect -y 1` shows `3c` |
 | RGB LEDs stay off | `ls /dev/spidev0.0`; `rgb_enable` and `rgb_brightness` in `config.json` |
 | Case fans never stop | `gpio_fan_mode` is `0` (always on) |
-| Settings ignored | `config.json` is valid JSON; restart the service after editing |
+| Settings ignored | `config.json` is valid JSON (see `logs/pironman5.log`) |
+| Menu entries missing | run `pironman5ctl.py install-scripts`, then reopen *User scripts* |
 
 ## Limitations
 
@@ -189,6 +234,8 @@ installed.
 - The Raspberry Pi 5 power button stays under Recalbox control: OLED pages
   rotate automatically instead of changing with the button.
 - Disk temperatures are not displayed.
+- EmulationStation cannot display custom notifications: the menu entry names
+  carry the information, and are refreshed when *User scripts* is reopened.
 - Enabling the Recalbox `hat.wpaf` fan/OLED support or GPIO controllers
   (`controllers.gpio`) conflicts with this service (shared I2C bus and GPIO
   pins).
@@ -197,7 +244,8 @@ installed.
 
 The service runs the official SunFounder `pironman5` software, unmodified,
 through a launcher that adapts it to Recalbox: settings and logs on the share
-partition, no systemd, no `lsblk`, exFAT file system. See
+partition, no systemd, no `lsblk`, exFAT file system, plus the Recalbox
+integration (menu entries, EmulationStation game events). See
 [recalbox/README.md](recalbox/README.md) for the technical details.
 
 | Path | Content |
