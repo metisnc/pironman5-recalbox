@@ -1,201 +1,214 @@
-# Pironman 5
+# Pironman 5 for Recalbox
 
-Pironman 5 case
+**English** | [Français](README.fr.md)
 
-Quick Links:
+Run the [SunFounder Pironman 5](https://www.sunfounder.com/) case features on
+[Recalbox](https://www.recalbox.com/): OLED status screen, case fans and RGB
+LEDs, on a Raspberry Pi 5.
 
-- [Pironman 5](#pironman-5)
-  - [About Pironman5](#about-pironman5)
-  - [Links](#links)
-  - [Installation](#installation)
-  - [Recalbox](#recalbox)
-  - [Update](#update)
-  - [Troubleshooting](#troubleshooting)
-  - [Compatible Systems](#compatible-systems)
-    - [Ubuntu 24.04 server eth0 and wifi not work](#ubuntu-2404-server-eth0-and-wifi-not-work)
-    - [Debug](#debug)
-  - [About SunFounder](#about-sunfounder)
-  - [Contact us](#contact-us)
+The official Pironman 5 installer targets Raspberry Pi OS (apt, systemd,
+virtualenv in `/opt`, InfluxDB) and cannot run on Recalbox. This project
+provides a dedicated installer that keeps everything in the persistent
+`/recalbox/share` partition, never modifies `/boot` or the system image, and
+survives reboots and Recalbox upgrades.
 
-## About Pironman5
+> This is a community project, not affiliated with SunFounder or Recalbox.
 
-## Links
+## Contents
 
-- SunFounder Online Store &emsp; <https://www.sunfounder.com/>
-- Documentation &emsp; <https://docs.sunfounder.com/projects/pironman5/en/latest/>
+- [Features](#features)
+- [Compatibility](#compatibility)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Service management](#service-management)
+- [Uninstallation](#uninstallation)
+- [Recalbox upgrades](#recalbox-upgrades)
+- [Troubleshooting](#troubleshooting)
+- [Limitations](#limitations)
+- [How it works](#how-it-works)
+- [Credits and license](#credits-and-license)
+
+## Features
+
+| Feature | Details |
+|---|---|
+| OLED screen | IP addresses (Ethernet and Wi-Fi), CPU load and temperature, RAM, disk usage; pages rotate automatically |
+| Case fans | Follow the Raspberry Pi 5 fan: switched on from about 50 °C by default, five modes available |
+| RGB LEDs | 4 WS2812 LEDs: solid, breathing, flow, rainbow, hue cycle; color, brightness and speed configurable |
+| Raspberry Pi 5 fan | Left to the Recalbox kernel driver, as on a stock system |
+| Footprint | About 2 % of one CPU core and 30 MB of RAM, running at low priority so games keep precedence |
+
+## Compatibility
+
+| Component | Supported |
+|---|---|
+| Recalbox | 11.0 (tested on `11.0-patron-1.1`) |
+| Board | Raspberry Pi 5 |
+| Case | Pironman 5 |
+
+Not supported: Pironman 5 Mini, Max, Pro Max and NAS, other Raspberry Pi
+models.
 
 ## Installation
 
-```bash
-curl -sSL "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh" | sudo bash
-```
+Requirements:
 
-To install PiPower5 as a plugin alongside Pironman 5, append `--pipower5`:
+- the Pironman 5 assembled on a Raspberry Pi 5 running Recalbox 11;
+- SSH access to the Recalbox as `root` (see the
+  [Recalbox documentation](https://wiki.recalbox.com/) for the credentials);
+- an Internet connection on the Recalbox, or the
+  [offline installation](#offline-installation).
 
-```bash
-curl -sSL "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh" | sudo bash -s -- --pipower5
-```
+Nothing needs to be enabled in `/boot`: the Raspberry Pi firmware detects the
+Pironman 5 and loads its device tree overlay (I2C and SPI) automatically.
 
-> **For users in mainland China (Gitee mirror):** append `--cn` to download the installer and all resources from Gitee instead of GitHub:
->
-> ```bash
-> curl -sSL "https://gitee.com/sunfounder/pironman5/raw/v1/install.sh" | sudo bash -s -- --cn
-> ```
->
-> With PiPower5 plugin:
->
-> ```bash
-> curl -sSL "https://gitee.com/sunfounder/pironman5/raw/v1/install.sh" | sudo bash -s -- --cn --pipower5
-> ```
+### Online installation
 
-> If your system does not support piping directly into `bash`, download the script first and then run it:
->
-> ```bash
-> curl -sSL "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh" -o install.sh
-> sudo bash install.sh
-> ```
->
-> With PiPower5 plugin:
->
-> ```bash
-> curl -sSL "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh" -o install.sh
-> sudo bash install.sh --pipower5
-> ```
-
-> **For Pro Max:** The Pro Max includes a 4.3" touchscreen and can auto-launch the dashboard on boot. We recommend switching the touchscreen mode from the default **Mouse Emulation** to **Multitouch** — this enables phone/tablet-like touch gestures and makes the dashboard much easier to use.
->
-> 1. **Raspberry Pi Icon** >> **Preferences** >> **Control Centre**
-> 2. Select **Screen** tab
-> 3. Long press / right click on **DSI-2**
-> 4. Select **Touchscreen** >> **Mode** >> **Multitouch**
-
-## Recalbox
-
-Recalbox (read-only system, no apt/systemd) uses a dedicated installer that
-puts everything in `/recalbox/share/pironman5` and never touches `/boot`
-(OLED, case fans and RGB LEDs; Pironman 5 on Raspberry Pi 5). Run as root on
-the Recalbox:
+Connect to the Recalbox with SSH and run:
 
 ```bash
 wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/v1/recalbox/install.sh | bash
 ```
 
-Uninstall, offline install, settings and limitations: see
-[recalbox/README.md](recalbox/README.md).
+The service starts immediately: the OLED screen, the RGB LEDs and the case
+fans come on within a few seconds.
 
-## Update
+The installer:
 
-<https://github.com/sunfounder/pironman5/blob/main/CHANGELOG.md>
+1. checks the system (Recalbox, Raspberry Pi 5, Python 3.11, Pironman 5);
+2. backs up the files it may affect to `/recalbox/share/pironman5-backups/<date>/`;
+3. downloads the dependencies, pinned to tested versions and verified by
+   checksum (prebuilt packages only, no compiler needed);
+4. installs everything in `/recalbox/share/pironman5/`;
+5. registers the service in `/recalbox/share/system/custom.sh`, which Recalbox
+   runs at startup and shutdown;
+6. starts the service.
+
+Running the installer again upgrades the installation and keeps your
+settings.
+
+### Offline installation
+
+On a computer with Internet access, Python 3 and Git:
+
+```bash
+git clone -b v1 https://github.com/metisnc/pironman5-recalbox.git
+bash pironman5-recalbox/recalbox/build-offline-bundle.sh pironman5-offline
+scp -r pironman5-recalbox pironman5-offline root@recalbox.local:/recalbox/share/
+ssh root@recalbox.local \
+  'bash /recalbox/share/pironman5-recalbox/recalbox/install.sh --offline /recalbox/share/pironman5-offline'
+```
+
+Replace `recalbox.local` with the address of your Recalbox if needed.
+
+## Configuration
+
+Settings are stored in `/recalbox/share/pironman5/config.json`, which you can
+also reach through the Recalbox network share. Edit the values in the
+`system` section, then [restart the service](#service-management).
+
+| Key | Values | Default |
+|---|---|---|
+| `rgb_enable` | `true`, `false` | `true` |
+| `rgb_style` | `solid`, `breathing`, `flow`, `flow_reverse`, `rainbow`, `rainbow_reverse`, `hue_cycle` | `breathing` |
+| `rgb_color` | hexadecimal color, e.g. `"#0a1aff"` | `"#0a1aff"` |
+| `rgb_brightness` | `0` to `100` | `100` |
+| `rgb_speed` | `0` to `100` | `50` |
+| `oled_enable` | `true`, `false` | `true` |
+| `oled_pages` | list of `mix`, `performance`, `ips`, `disk` | all four |
+| `oled_page_interval` | seconds between pages, `0` to stay on the first page | `10` |
+| `oled_rotation` | `0`, `180` | `0` |
+| `oled_sleep_timeout` | seconds before the screen turns off, `0` = never | `0` |
+| `temperature_unit` | `C`, `F` | `C` |
+| `gpio_fan_mode` | case fans: `0` always on, `1` performance, `2` cool, `3` balanced, `4` quiet | `1` |
+| `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+
+`gpio_fan_mode` sets the Raspberry Pi 5 fan level from which the case fans
+turn on: `1` from about 50 °C, `2` from about 60 °C, `3` from about 67 °C,
+`4` from about 75 °C.
+
+Keep `oled_sleep_timeout` at `0`: Recalbox keeps control of the power button,
+so nothing wakes the screen up once it has turned off.
+
+## Service management
+
+```bash
+bash /recalbox/share/pironman5/app/recalbox/pironman5-service.sh status
+bash /recalbox/share/pironman5/app/recalbox/pironman5-service.sh restart
+bash /recalbox/share/pironman5/app/recalbox/pironman5-service.sh stop
+bash /recalbox/share/pironman5/app/recalbox/pironman5-service.sh start
+```
+
+Logs are in `/recalbox/share/pironman5/logs/`: `pironman5.log` (limited to
+3 MB in total) and `console.log` (output of the last start).
+
+## Uninstallation
+
+```bash
+bash /recalbox/share/pironman5/app/recalbox/uninstall.sh
+```
+
+The uninstaller stops the service (screen, LEDs and case fans are switched
+off), removes the startup entry from `custom.sh` and moves the installation
+to `/recalbox/share/pironman5-backups/uninstall-<date>/`. Nothing is deleted:
+remove `/recalbox/share/pironman5-backups` yourself once you no longer need
+it.
+
+To get your settings back after reinstalling, copy `config.json` from the
+backup folder to `/recalbox/share/pironman5/` and restart the service.
+
+## Recalbox upgrades
+
+Recalbox upgrades replace the system image but keep `/recalbox/share`, where
+the installation and its startup entry live: the service keeps working
+after an upgrade. To check:
+
+```bash
+bash /recalbox/share/pironman5/app/recalbox/pironman5-service.sh status
+```
+
+The command reports a warning if the startup hook or the I2C/SPI devices are
+missing. If a future Recalbox release ships a Python version other than 3.11,
+the service will not start until a matching release of this project is
+installed.
 
 ## Troubleshooting
 
-If InfluxDB (history / dashboard data logging) stops working after an update, run the built-in doctor:
+| Symptom | Check |
+|---|---|
+| Nothing works | `status` above, then `logs/console.log` and `logs/pironman5.log` |
+| OLED screen stays black | `cat /proc/device-tree/hat/product` shows `Pironman 5`; `i2cdetect -y 1` shows `3c` |
+| RGB LEDs stay off | `ls /dev/spidev0.0`; `rgb_enable` and `rgb_brightness` in `config.json` |
+| Case fans never stop | `gpio_fan_mode` is `0` (always on) |
+| Settings ignored | `config.json` is valid JSON; restart the service after editing |
 
-```bash
-sudo pironman5 doctor          # report only
-sudo pironman5 doctor --fix    # report and repair
-```
+## Limitations
 
-It checks and repairs the problems that are usually left behind by upgrading an old 1.2.x installation:
+- The web dashboard and history (InfluxDB) of the official software are not
+  included, to keep the footprint low.
+- The Raspberry Pi 5 power button stays under Recalbox control: OLED pages
+  rotate automatically instead of changing with the button.
+- Disk temperatures are not displayed.
+- Enabling the Recalbox `hat.wpaf` fan/OLED support or GPIO controllers
+  (`controllers.gpio`) conflicts with this service (shared I2C bus and GPIO
+  pins).
 
-- duplicate TOML keys in `/etc/influxdb/influxdb.conf` - `influxd` refuses to start with `Key 'http.log-enabled' has already been defined`
-- `/var/lib/influxdb` not owned by the `influxdb` user - `influxdb.service` dies with `permission denied`
-- `influxdb.service` / `pironman5.service` not enabled or not running
-- `/opt/pironman5` and `/var/log/pironman5` ownership
+## How it works
 
-Re-running the installer performs the same repair:
+The service runs the official SunFounder `pironman5` software, unmodified,
+through a launcher that adapts it to Recalbox: settings and logs on the share
+partition, no systemd, no `lsblk`, exFAT file system. See
+[recalbox/README.md](recalbox/README.md) for the technical details.
 
-```bash
-curl -sSL "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh" | sudo bash
-```
+| Path | Content |
+|---|---|
+| `pironman5/` | SunFounder `pironman5` package (upstream) |
+| `recalbox/` | Recalbox installer, uninstaller, service script and launcher |
 
-Upgrading an old 1.2.x installation also leaves its history behind: 1.2.x stored it in the InfluxDB database `pironman5`, while this version uses one database per product (`pironman5-max`, `pironman5-mini`, ...). Copy it over with:
+## Credits and license
 
-```bash
-sudo pironman5 migrate-history            # report what can be copied
-sudo pironman5 migrate-history --yes      # copy it
-```
+Based on [sunfounder/pironman5](https://github.com/sunfounder/pironman5),
+[pm_auto](https://github.com/sunfounder/pm_auto) and
+[sf_rpi_status](https://github.com/sunfounder/sf_rpi_status) by SunFounder.
 
-It copies only the points inside the configured retention window and older than the oldest point already in the target database (so newer data is never overwritten), never deletes anything, and runs automatically at the end of the installation (`--skip-history-migration` opts out).
-
-## Compatible Systems
-
-Operate Systems that passed the test on the Raspberry Pi 5:
-
-Operate System | Release Date | Compatible
-:---   | :---: | :---: 
-Raspberry Pi OS Desktop - bookworm (64 bit) | 2024-11-19 | &#x2705;
-Raspberry Pi OS Desktop - bookworm (32 bit) | 2024-11-19 |  &#x2705;
-Raspberry Pi OS Full - bookworm (64 bit) | 2024-11-19 |  &#x2705;
-Raspberry Pi OS Full - bookworm (32 bit) | 2024-11-19 |  &#x2705;
-Raspberry Pi OS lite - bookworm (64 bit) | 2024-11-19 |  &#x2705;
-Raspberry Pi OS lite - bookworm (64 bit) | 2024-11-19 |  &#x2705;
-Ubuntu Desktop 24.04.1 LTS (64 bit) | 2024-08-29 |  &#x2705;
-Ubuntu Server 24.04.1 LTS (64 bit) | 2024-10-10 |  &#x2705;
-Ubuntu Desktop 24.10 (64 bit) | 2024-10-10 |   &#x2705;
-Ubuntu Server 24.10 (64 bit) | 2024-08-29 |   &#x2705;
-Kali Linux | 2024-08-27 | &#x2705;
-Home Assistant OS 14.0 | 2024-12-03 | &#x2705;
-Homebridge bookworm (64 bit) | 2024-05-03 | &#x2705;
-Homebridge bookworm (64 bit) | 2024-05-03 | &#x2705;
-Batocera Linux | 2024-07-31 | &#x2705;
-Debian Trixie (64 bit) | 2026-09-14 | &#x2705;
-Recalbox 11.0-patron-1.1 ([dedicated installer](recalbox/README.md)) | 2026-10-11 | &#x2705;
-
-### Ubuntu 24.04 server eth0 and wifi not work
-
-https://www.reddit.com/r/Ubuntu/comments/1d0s8v5/ubuntu_2404_server_on_my_raspberry_pi_5_and_eth0/
-
-
-### Debug
-
-Clone the dependency you want to debug or edit
-
-```bash
-git clone https://github.com/sunfounder/pironman5.git
-git clone https://github.com/sunfounder/pm_dashboard.git
-git clone https://github.com/sunfounder/pm_auto.git
-git clone https://github.com/sunfounder/sf_rpi_status.git
-```
-
-Make adjustments, and manually install the package
-
-```bash
-# install from folder
-sudo /opt/pironman5/venv/bin/pip3 uninstall pironman5 -y && sudo /opt/pironman5/venv/bin/pip3 install ~/pironman5 --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-sudo /opt/pironman5/venv/bin/pip3 uninstall pm_dashboard -y && sudo /opt/pironman5/venv/bin/pip3 install ~/pm_dashboard --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-sudo /opt/pironman5/venv/bin/pip3 uninstall pm_auto -y && sudo /opt/pironman5/venv/bin/pip3 install ~/pm_auto --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-sudo /opt/pironman5/venv/bin/pip3 uninstall sf_rpi_status -y && sudo /opt/pironman5/venv/bin/pip3 install ~/sf_rpi_status --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-sudo /opt/pironman5/venv/bin/pip3 uninstall pipower5 -y && sudo /opt/pironman5/venv/bin/pip3 install ~/pipower5 --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-
-# install from github repo
-sudo /opt/pironman5/venv/bin/pip3 uninstall sf_rpi_status -y && sudo /opt/pironman5/venv/bin/pip3 install git+https://github.com/sunfounder/sf_rpi_status.git --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-sudo /opt/pironman5/venv/bin/pip3 uninstall pipower5 -y && sudo /opt/pironman5/venv/bin/pip3 install git+https://github.com/sunfounder/pipower5.git --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-sudo /opt/pironman5/venv/bin/pip3 uninstall pm_auto -y && sudo /opt/pironman5/venv/bin/pip3 install git+https://github.com/sunfounder/pm_auto.git@1.4.x --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-sudo /opt/pironman5/venv/bin/pip3 uninstall pm_dashboard -y && sudo /opt/pironman5/venv/bin/pip3 install git+https://github.com/sunfounder/pm_dashboard.git@1.3.x --no-build-isolation && sudo chown -R pironman5:pironman5 /opt/pironman5
-```
-
-
-Start/stop the service for debug
-
-```bash
-sudo systemctl stop pironman5.service
-sudo systemctl start pironman5.service
-sudo systemctl restart pironman5.service
-sudo -u pironman5 /opt/pironman5/venv/bin/python3
-
-journalctl -xefu pironman5.service
-sudo systemctl restart pironman5.service && journalctl -xefu pironman5.service
-```
-
-## About SunFounder
-
-SunFounder is a company focused on STEAM education with products like open source robots, development boards, STEAM kit, modules, tools and other smart devices distributed globally. In SunFounder, we strive to help elementary and middle school students as well as hobbyists, through STEAM education, strengthen their hands-on practices and problem-solving abilities. In this way, we hope to disseminate knowledge and provide skill training in a full-of-joy way, thus fostering your interest in programming and making, and exposing you to a fascinating world of science and engineering. To embrace the future of artificial intelligence, it is urgent and meaningful to learn abundant STEAM knowledge.
-
-## Contact us
-
-website:
-    www.sunfounder.com
-
-E-mail:
-    service@sunfounder.com
+Licensed under the GNU General Public License v2.0, see [LICENSE](LICENSE).
