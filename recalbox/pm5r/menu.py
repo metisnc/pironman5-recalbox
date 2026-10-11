@@ -32,7 +32,6 @@ NAMES = {
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Ventilateurs · mode',
         'oled_enable': ('Écran · allumage', 'allumer', 'éteindre'),
-        'status': 'État',
     },
     'en': {
         'rgb_enable': ('LEDs · power', 'turn on', 'turn off'),
@@ -42,7 +41,6 @@ NAMES = {
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Case fans · mode',
         'oled_enable': ('Screen · power', 'turn on', 'turn off'),
-        'status': 'Status',
     },
 }
 ARROW = ' → '
@@ -66,7 +64,6 @@ def entries(system, lang):
         current = bool(settings.get(system, key))
         result[fixed + ARROW + (turn_off if current else turn_on)] = \
             ['set', key, json.dumps(not current)]
-    result[names['status']] = ['status']
     return result
 
 

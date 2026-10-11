@@ -120,7 +120,6 @@ brackets and the result it produces:
 | `Pironman · LEDs · style (flow) → rainbow` | solid, breathing, flow, rainbow, hue cycle |
 | `Pironman · Case fans · mode (performance) → cool` | always on, performance, cool, balanced, quiet |
 | `Pironman · Screen · power → turn off` | OLED screen on or off |
-| `Pironman · Status` | summary on the OLED for 6 seconds |
 
 Changes apply immediately and are saved. The OLED confirms each one for
 3 seconds, and the Recalbox message repeats the entry name. Entries are

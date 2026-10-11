@@ -123,7 +123,6 @@ la valeur actuelle entre parenthèses et le résultat qu'elle produit :
 | `Pironman · LEDs · style (défilement) → arc-en-ciel` | fixe, respiration, défilement, arc-en-ciel, cycle de couleurs |
 | `Pironman · Ventilateurs · mode (performance) → frais` | toujours, performance, frais, équilibré, silencieux |
 | `Pironman · Écran · allumage → éteindre` | allume ou éteint l'écran OLED |
-| `Pironman · État` | résumé sur l'OLED pendant 6 secondes |
 
 Les changements s'appliquent immédiatement et sont enregistrés. L'OLED
 confirme chacun pendant 3 secondes, et le message de Recalbox reprend le nom

@@ -52,7 +52,7 @@ def test_menu_entries_name_the_result():
     assert entries['LEDs · selon le système → désactiver'][2] == 'false'
     assert entries['Ventilateurs · mode (performance) → frais'] == ['set', 'gpio_fan_mode', '2']
     assert entries['Écran · allumage → éteindre'] == ['set', 'oled_enable', 'false']
-    assert entries['État'] == ['status']
+    assert len(entries) == 7
     for lang in ('fr', 'en'):
         for name in menu.entries(system, lang):
             assert not set(name) & set('"*/:<>?\\|')  # valid exFAT file names
@@ -184,7 +184,7 @@ def test_ctl_menu_entries_install_rename_remove(ctl):
     (manual / 'someone else.sh').write_text('#!/bin/sh\necho hi\n')
     assert pironman5ctl.main(['install-scripts']) == 0
     ours = sorted(n for n in os.listdir(manual) if n.startswith('Pironman · '))
-    assert len(ours) == 8
+    assert len(ours) == 7
     assert 'Pironman · LEDs · style (fixe) → respiration.sh' in ours
     body = (manual / 'Pironman · LEDs · style (fixe) → respiration.sh').read_text()
     assert "'set' 'rgb_style' '\"breathing\"'" in body
@@ -193,10 +193,10 @@ def test_ctl_menu_entries_install_rename_remove(ctl):
     names = os.listdir(manual)
     assert 'Pironman · LEDs · style (respiration) → défilement.sh' in names
     assert 'Pironman · LEDs · style (fixe) → respiration.sh' not in names
-    assert len([n for n in names if n.startswith('Pironman')]) == 8
+    assert len([n for n in names if n.startswith('Pironman')]) == 7
     assert pironman5ctl.main(['remove-scripts', str(tmp_path / 'backup')]) == 0
     assert os.listdir(manual) == ['someone else.sh']
-    assert len(os.listdir(tmp_path / 'backup')) == 8
+    assert len(os.listdir(tmp_path / 'backup')) == 7
 
 
 def test_ctl_set_does_not_create_menu_entries_when_not_installed(ctl):
