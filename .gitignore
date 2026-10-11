@@ -1,6 +1,7 @@
 .vscode
-pironman5.egg-info*
-*__pycache__*
-dev
 .claude
-CLAUDE.md
+.DS_Store
+.pytest_cache
+*__pycache__*
+pironman5.egg-info*
+dev
