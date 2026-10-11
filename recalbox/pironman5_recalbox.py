@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 metisnc
+# SPDX-License-Identifier: GPL-2.0-only
 """Run the unmodified pironman5 service on Recalbox.
 
 Recalbox has a read-only rootfs, no systemd, no lsblk and keeps persistent

@@ -1,0 +1,17 @@
+Pironman 5 for Recalbox
+https://github.com/metisnc/pironman5-recalbox
+
+Copyright (C) 2026 metisnc
+  Recalbox port: recalbox/, README.md, README.fr.md
+
+Based on SunFounder Pironman 5 software, Copyright (C) SunFounder
+  pironman5/  https://github.com/sunfounder/pironman5
+  Installed at runtime, pinned:
+    pm_auto        https://github.com/sunfounder/pm_auto
+    sf_rpi_status  https://github.com/sunfounder/sf_rpi_status
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 2 as published by
+the Free Software Foundation. See the LICENSE file for the full text.
+
+This project is not affiliated with SunFounder or Recalbox.

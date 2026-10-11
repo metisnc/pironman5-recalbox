@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (C) 2026 metisnc
+# SPDX-License-Identifier: GPL-2.0-only
 # Pironman 5 uninstaller / rollback for Recalbox.
 #
 # Stops the service, removes the autostart block from custom.sh and moves

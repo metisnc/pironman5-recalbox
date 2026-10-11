@@ -207,8 +207,9 @@ partition, no systemd, no `lsblk`, exFAT file system. See
 
 ## Credits and license
 
-Based on [sunfounder/pironman5](https://github.com/sunfounder/pironman5),
+Recalbox port © 2026 metisnc. Based on [sunfounder/pironman5](https://github.com/sunfounder/pironman5),
 [pm_auto](https://github.com/sunfounder/pm_auto) and
 [sf_rpi_status](https://github.com/sunfounder/sf_rpi_status) by SunFounder.
 
-Licensed under the GNU General Public License v2.0, see [LICENSE](LICENSE).
+Licensed under the GNU General Public License v2.0, see [LICENSE](LICENSE)
+and [NOTICE](NOTICE).

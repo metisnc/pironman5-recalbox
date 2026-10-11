@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (C) 2026 metisnc
+# SPDX-License-Identifier: GPL-2.0-only
 # Pironman 5 installer for Recalbox (Raspberry Pi 5).
 #
 # Everything is installed under /recalbox/share/pironman5 (persistent). The
@@ -30,7 +32,7 @@ OFFLINE_DIR=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --offline) shift; OFFLINE_DIR="${1:-}" ;;
-        -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+        -h|--help) sed -n '/^# Pironman 5 installer/,/^$/p' "$0"; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
     shift

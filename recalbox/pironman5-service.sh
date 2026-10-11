@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (C) 2026 metisnc
+# SPDX-License-Identifier: GPL-2.0-only
 # Pironman 5 service control for Recalbox.
 # Called at boot/shutdown by /recalbox/share/system/custom.sh (via S99custom).
 #
