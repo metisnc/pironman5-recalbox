@@ -8,6 +8,7 @@ Quick Links:
   - [About Pironman5](#about-pironman5)
   - [Links](#links)
   - [Installation](#installation)
+  - [Recalbox](#recalbox)
   - [Update](#update)
   - [Troubleshooting](#troubleshooting)
   - [Compatible Systems](#compatible-systems)
@@ -68,6 +69,20 @@ curl -sSL "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh"
 > 3. Long press / right click on **DSI-2**
 > 4. Select **Touchscreen** >> **Mode** >> **Multitouch**
 
+## Recalbox
+
+Recalbox (read-only system, no apt/systemd) uses a dedicated installer that
+puts everything in `/recalbox/share/pironman5` and never touches `/boot`
+(OLED, case fans and RGB LEDs; Pironman 5 on Raspberry Pi 5). Run as root on
+the Recalbox:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/v1/recalbox/install.sh | bash
+```
+
+Uninstall, offline install, settings and limitations: see
+[recalbox/README.md](recalbox/README.md).
+
 ## Update
 
 <https://github.com/sunfounder/pironman5/blob/main/CHANGELOG.md>
@@ -125,6 +140,7 @@ Homebridge bookworm (64 bit) | 2024-05-03 | &#x2705;
 Homebridge bookworm (64 bit) | 2024-05-03 | &#x2705;
 Batocera Linux | 2024-07-31 | &#x2705;
 Debian Trixie (64 bit) | 2026-09-14 | &#x2705;
+Recalbox 11.0-patron-1.1 ([dedicated installer](recalbox/README.md)) | 2026-10-11 | &#x2705;
 
 ### Ubuntu 24.04 server eth0 and wifi not work
 

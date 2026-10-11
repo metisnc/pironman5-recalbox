@@ -62,3 +62,27 @@ systemctl restart pironman5
 
 # Check peripherals
 curl -s http://localhost:34001/api/v1.0/get-device-info
+```
+
+## Recalbox port (`recalbox/`)
+
+Fork-only port for Recalbox 11 (Buildroot, read-only rootfs, no systemd,
+exFAT share). Kept entirely in `recalbox/` so upstream syncs do not conflict:
+do not patch `pironman5/` for Recalbox, adapt at runtime in
+`recalbox/pironman5_recalbox.py` instead. See `recalbox/README.md`.
+
+- Install dir `/recalbox/share/pironman5` (`app/`, `lib/`, `config.json`, `logs/`)
+- Autostart: marked block in `/recalbox/share/system/custom.sh` (run by `S99custom`)
+- Overlay loaded by the firmware from the Pironman 5 HAT EEPROM: no `/boot` change
+- Dependencies: `recalbox/requirements-recalbox.txt` (cp311 aarch64, hashes);
+  `pm_auto` / `sf_rpi_status` commits pinned in `recalbox/install.sh`
+
+Test device: 10.185.30.144 — Recalbox 11.0-patron-1.1, Pi 5, Pironman 5
+
+```bash
+# Deploy a working tree to the Recalbox and (re)install
+tar --exclude=.git -czf - . | ssh root@<recalbox> \
+  'mkdir -p /tmp/pm5 && tar -xzf - -C /tmp/pm5 && bash /tmp/pm5/recalbox/install.sh'
+bash /recalbox/share/pironman5/app/recalbox/pironman5-service.sh status
+python3 -m pytest recalbox/tests
+```
