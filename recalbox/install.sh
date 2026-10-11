@@ -81,7 +81,7 @@ download() {  # url dest
     wget -q -O "$2" "$1" || curl -fsSL -o "$2" "$1" || die "download failed: $1"
 }
 
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd) || SCRIPT_DIR=""
 if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/../pironman5/pironman5.py" ]; then
     SRC=$(cd "$SCRIPT_DIR/.." && pwd)
     log "Using local source $SRC"
