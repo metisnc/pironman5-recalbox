@@ -10,7 +10,7 @@
 # Usage (on the Recalbox, as root):
 #   bash install.sh                      # from a copy of the repository
 #   bash install.sh --offline <bundle>   # no Internet, see build-offline-bundle.sh
-#   wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/v1/recalbox/install.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/main-pr5-rc/recalbox/install.sh | bash
 
 set -euo pipefail
 
@@ -22,7 +22,7 @@ MARK_END="# <<< pironman5-recalbox <<<"
 
 # Source of this port, used when the script is not run from a repository copy
 PM5_REPO="${PM5_REPO:-metisnc/pironman5-recalbox}"
-PM5_REF="${PM5_REF:-v1}"
+PM5_REF="${PM5_REF:-main-pr5-rc}"
 
 # Upstream SunFounder dependencies, pinned to tested commits
 PM_AUTO_COMMIT="117f66567c6b5b74e588a02fa5c192fc69624b1f"        # pm_auto v2

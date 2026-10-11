@@ -12,9 +12,9 @@ User docs: `README.md` (EN), `README.fr.md` (FR). Technical notes: `recalbox/REA
 | `recalbox/` | this fork | All Recalbox code, scripts, tests and technical notes |
 | `README.md`, `README.fr.md` | this fork | Keep both languages in sync |
 
-Branches: `v1` (release, installer URL points to it), `recalbox-port`
-(development). Never commit directly to `v1`: merge `recalbox-port` with
-`--no-ff`.
+Branches: `main-pr5-rc` (release, default branch, installer URL points to
+it), `dev-pr5-rc` (development). Never commit directly to `main-pr5-rc`:
+merge `dev-pr5-rc` with `--no-ff`.
 
 ## Runtime architecture
 

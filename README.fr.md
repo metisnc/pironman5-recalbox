@@ -68,7 +68,7 @@ Pironman 5 et charge automatiquement son overlay device tree (I2C et SPI).
 Connectez-vous à la Recalbox en SSH et lancez :
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/v1/recalbox/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/main-pr5-rc/recalbox/install.sh | bash
 ```
 
 Le service démarre aussitôt : l'écran OLED, les LEDs RGB et les ventilateurs
@@ -95,7 +95,7 @@ réglages.
 Sur un ordinateur disposant d'Internet, de Python 3 et de Git :
 
 ```bash
-git clone -b v1 https://github.com/metisnc/pironman5-recalbox.git
+git clone -b main-pr5-rc https://github.com/metisnc/pironman5-recalbox.git
 bash pironman5-recalbox/recalbox/build-offline-bundle.sh pironman5-offline
 scp -r pironman5-recalbox pironman5-offline root@recalbox.local:/recalbox/share/
 ssh root@recalbox.local \
