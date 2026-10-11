@@ -1,3 +1,5 @@
+# Copyright (C) 2026 metisnc
+# SPDX-License-Identifier: GPL-2.0-only
 """Tests for the Recalbox launcher (run with: python3 -m pytest recalbox/tests)."""
 import os
 import sys

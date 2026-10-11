@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (C) 2026 metisnc
+# SPDX-License-Identifier: GPL-2.0-only
 # Build an offline bundle for recalbox/install.sh --offline, on any machine
 # with Internet, python3 and pip (macOS or Linux, no compiler needed).
 #

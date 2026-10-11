@@ -212,8 +212,9 @@ exFAT. Détails techniques (en anglais) :
 
 ## Crédits et licence
 
-Basé sur [sunfounder/pironman5](https://github.com/sunfounder/pironman5),
+Portage Recalbox © 2026 metisnc. Basé sur [sunfounder/pironman5](https://github.com/sunfounder/pironman5),
 [pm_auto](https://github.com/sunfounder/pm_auto) et
 [sf_rpi_status](https://github.com/sunfounder/sf_rpi_status) de SunFounder.
 
-Sous licence GNU General Public License v2.0, voir [LICENSE](LICENSE).
+Sous licence GNU General Public License v2.0, voir [LICENSE](LICENSE) et
+[NOTICE](NOTICE).
