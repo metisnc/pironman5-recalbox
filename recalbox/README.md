@@ -88,6 +88,10 @@ Pironman 5 HAT EEPROM, so no `config.txt` change is required.
   `Pironman5.update_config()`. Changes to the addons run in pm_auto's asyncio
   loop (`call_soon_threadsafe`). Game colors are applied to the WS2812 addon
   only, never saved.
+- Case fan LEDs: pm_auto knows `follow`/`on`/`off` and starts in `follow`
+  whatever is saved. `control.patch_fan_addon()` maps `rgb` at start-up, and
+  `Integration._apply_fan_led()` applies the saved mode once the service runs
+  and after each RGB/screensaver change (`rgb` → `on`/`off`, never saved).
 
 ## Updating dependencies
 

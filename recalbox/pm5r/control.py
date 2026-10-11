@@ -25,6 +25,26 @@ DELAYED_OFF = {'oled_enable'}
 # fan LEDs (Pironman 5): pm_auto would fail on the missing LED.
 RESTART_ONLY = {'gpio_fan_pin', 'gpio_fan_led_pin'}
 TOAST_SECONDS = 3
+# Case fan LED modes understood by pm_auto; 'rgb' (like the RGB LEDs) is ours
+FAN_LED_NATIVE = ('follow', 'on', 'off')
+FAN_LED_KEYS = {'gpio_fan_led', 'rgb_enable', 'sleep_sync'}
+
+
+def patch_fan_addon():
+    """Let pm_auto's FanAddon accept gpio_fan_led = 'rgb' at start-up.
+
+    Must run before the service creates its addons. The real value is then
+    applied by Integration once the service runs.
+    """
+    import pm_auto.addons.fan as fan
+    original = fan.FanAddon.update_config
+
+    def update_config(self, config, init=False):
+        if isinstance(config, dict) and config.get('gpio_fan_led') not in (None,) + FAN_LED_NATIVE:
+            config = dict(config, gpio_fan_led='on' if config.get('rgb_enable', True) else 'off')
+        return original(self, config, init=init)
+
+    fan.FanAddon.update_config = update_config
 
 
 class Integration:
@@ -45,6 +65,7 @@ class Integration:
         if 'gpio_fan_led' not in getattr(app, 'peripherals', []):
             self.restart_only.add('gpio_fan_led')
         self._mtime = self._stat()
+        self._fan_led_applied = False
         self._stopping = threading.Event()
         self._thread = threading.Thread(target=self._run, name='recalbox-control', daemon=True)
 
@@ -159,7 +180,9 @@ class Integration:
         restart_only = sorted(k for k in changes if k in self.restart_only)
         if restart_only:
             self.log.info('Applied at next service start: %s', ', '.join(restart_only))
-        live = {k: v for k, v in changes.items() if k not in self.restart_only}
+        # gpio_fan_led goes through _apply_fan_led(), never to pm_auto as is
+        live = {k: v for k, v in changes.items()
+                if k not in self.restart_only and k != 'gpio_fan_led'}
         now = {k: v for k, v in live.items()
                if not (k in DELAYED_OFF and v is False)}
         later = {k: v for k, v in live.items() if k not in now}
@@ -182,6 +205,8 @@ class Integration:
             # Let the confirmation show before the screen goes off
             loop = self.app.pm_auto.loop
             loop.call_later(TOAST_SECONDS, self._safe, self._apply_later, later)
+        if FAN_LED_KEYS & set(changes):
+            self._apply_fan_led()
         if self.games.sleeping:
             self._apply_sleep()  # a change must not light up a sleeping case
         # Menu entry names show the result of the next action
@@ -193,9 +218,34 @@ class Integration:
     def _run(self):
         while not self._stopping.wait(self.poll_interval):
             try:
+                if not self._fan_led_applied and self._loop_running():
+                    # pm_auto starts the fan LEDs in 'follow' whatever the
+                    # saved setting: apply it once the service runs
+                    self._fan_led_applied = True
+                    self.in_loop(self._apply_fan_led)
                 self.poll()
             except Exception:
                 self.log.exception('config watcher error')
+
+    def _loop_running(self):
+        loop = getattr(self.app.pm_auto, 'loop', None)
+        return loop is not None and loop.is_running()
+
+    # ------------------------------------------------------------ fan LEDs
+    def fan_led_value(self):
+        """pm_auto value of the case fan LEDs for the gpio_fan_led setting."""
+        mode = settings.get(self.system, 'gpio_fan_led')
+        if mode == 'rgb':
+            asleep = self.games.sleeping and settings.get(self.system, 'sleep_sync')
+            lit = self.system.get('rgb_enable', True) and not asleep
+            return 'on' if lit else 'off'
+        return mode if mode in FAN_LED_NATIVE else 'follow'
+
+    def _apply_fan_led(self):
+        fan = self.addon('fan')
+        if fan is None or 'gpio_fan_led' not in getattr(self.app, 'peripherals', []):
+            return
+        fan.update_config({'gpio_fan_led': self.fan_led_value()})
 
     # ------------------------------------------------------------ screensaver
     def _on_sleep(self):
@@ -213,6 +263,7 @@ class Integration:
             screen.sleep()
         if leds is not None:
             leds.update_config({'rgb_enable': False})
+        self._apply_fan_led()
 
     def _apply_wake(self):
         screen, leds = self.addon('oled'), self.addon('ws2812')
@@ -221,6 +272,7 @@ class Integration:
             screen.last_page_index = -1
         if leds is not None:
             leds.update_config({'rgb_enable': self.system.get('rgb_enable', True)})
+        self._apply_fan_led()
 
     # ------------------------------------------------------------ games
     def _on_game_start(self, game):
