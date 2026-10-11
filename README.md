@@ -39,7 +39,7 @@ survives reboots and Recalbox upgrades.
 | LED color per system | During a game, the LEDs take the color of the console maker (Nintendo red, Sega blue…) |
 | Case fans | Follow the Raspberry Pi 5 fan: switched on from about 50 °C by default, five modes available |
 | Case fan LEDs (Max) | On or off from the Recalbox menu (they run their own color effect) |
-| Screensaver sync | OLED and RGB LEDs switch off while the EmulationStation screensaver runs |
+| Screensaver sync | OLED, RGB LEDs and case fan LEDs switch off while the EmulationStation screensaver runs |
 | RGB LEDs | 4 WS2812 LEDs: solid, breathing, flow, rainbow, hue cycle; color, brightness and speed configurable |
 | Raspberry Pi 5 fan | Left to the Recalbox kernel driver, as on a stock system |
 | Footprint | About 2 % of one CPU core and 30 MB of RAM, running at low priority so games keep precedence |
@@ -128,7 +128,7 @@ brackets and the result it produces:
 | `Pironman · Case fans · LEDs → turn off` | case fan LEDs on or off (Max only) |
 | `Pironman · Case fans · mode (performance) → cool` | always on, performance, cool, balanced, quiet |
 | `Pironman · Screen · power → turn off` | OLED screen on or off |
-| `Pironman · Screensaver · sync → disable` | OLED and LEDs off during the EmulationStation screensaver |
+| `Pironman · Screensaver · sync → disable` | OLED, RGB and fan LEDs off during the EmulationStation screensaver |
 
 Changes apply immediately and are saved. The OLED confirms each one for
 3 seconds, and the Recalbox message repeats the entry name. Entries are
@@ -172,7 +172,7 @@ the service.
 | `gpio_fan_mode` | case fans: `0` always on, `1` performance, `2` cool, `3` balanced, `4` quiet | `1` |
 | `oled_game_page` | `true`, `false`: now playing page during games | `true` |
 | `rgb_system_colors` | `true`, `false`: LED color per console maker during games | `true` |
-| `sleep_sync` | `true`, `false`: OLED and RGB LEDs off during the screensaver | `true` |
+| `sleep_sync` | `true`, `false`: OLED, RGB and fan LEDs off during the screensaver | `true` |
 | `gpio_fan_led` | `on`, `off`: case fan LEDs (Max) | `on` |
 | `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 

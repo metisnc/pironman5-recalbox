@@ -41,7 +41,7 @@ système, et résiste aux redémarrages comme aux mises à jour de Recalbox.
 | Couleur par système | Pendant une partie, les LEDs prennent la couleur du constructeur de la console (Nintendo rouge, Sega bleu…) |
 | Ventilateurs du boîtier | Suivent le ventilateur du Raspberry Pi 5 : allumés à partir d'environ 50 °C par défaut, cinq modes disponibles |
 | LEDs des ventilateurs (Max) | Allumées ou éteintes depuis le menu Recalbox (elles ont leur propre effet de couleur) |
-| Veille synchronisée | L'OLED et les LEDs RGB s'éteignent pendant l'écran de veille d'EmulationStation |
+| Veille synchronisée | L'OLED, les LEDs RGB et les LEDs des ventilateurs s'éteignent pendant l'écran de veille d'EmulationStation |
 | LEDs RGB | 4 LEDs WS2812 : fixe, respiration, défilement, arc-en-ciel, cycle de teinte ; couleur, luminosité et vitesse réglables |
 | Ventilateur du Raspberry Pi 5 | Laissé au pilote du noyau Recalbox, comme sur un système d'origine |
 | Empreinte | Environ 2 % d'un cœur CPU et 30 Mo de RAM, en priorité basse pour laisser la main aux jeux |
@@ -132,7 +132,7 @@ la valeur actuelle entre parenthèses et le résultat qu'elle produit :
 | `Pironman · LEDs · style (défilement) → arc-en-ciel` | fixe, respiration, défilement, arc-en-ciel, cycle de couleurs |
 | `Pironman · Ventilateurs · LEDs → éteindre` | allume ou éteint les LEDs des ventilateurs (Max uniquement) |
 | `Pironman · Ventilateurs · mode (performance) → frais` | toujours, performance, frais, équilibré, silencieux |
-| `Pironman · Veille · synchronisation → désactiver` | OLED et LEDs éteints pendant l'écran de veille d'EmulationStation |
+| `Pironman · Veille · synchronisation → désactiver` | OLED, LEDs RGB et LEDs des ventilateurs éteints pendant l'écran de veille d'EmulationStation |
 | `Pironman · Écran · allumage → éteindre` | allume ou éteint l'écran OLED |
 
 Les changements s'appliquent immédiatement et sont enregistrés. L'OLED
@@ -178,7 +178,7 @@ redémarrer le service.
 | `gpio_fan_mode` | ventilateurs du boîtier : `0` toujours allumés, `1` performance, `2` frais, `3` équilibré, `4` silencieux | `1` |
 | `oled_game_page` | `true`, `false` : page En jeu pendant les parties | `true` |
 | `rgb_system_colors` | `true`, `false` : couleur des LEDs selon le constructeur pendant les parties | `true` |
-| `sleep_sync` | `true`, `false` : OLED et LEDs RGB éteints pendant l'écran de veille | `true` |
+| `sleep_sync` | `true`, `false` : OLED, LEDs RGB et LEDs des ventilateurs éteints pendant l'écran de veille | `true` |
 | `gpio_fan_led` | `on`, `off` : LEDs des ventilateurs (Max) | `on` |
 | `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 

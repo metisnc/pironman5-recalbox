@@ -388,3 +388,13 @@ def test_fan_led_on_off(tmp_path, monkeypatch):
     assert fan.calls == [{'gpio_fan_led': 'off'}]
     app.config['system']['gpio_fan_led'] = 'rgb'  # old value: treated as on
     assert integration.fan_led_value() == 'on'
+    # screensaver: off, then back to the saved state on wakeup
+    app.config['system'].update({'gpio_fan_led': 'on', 'sleep_sync': True})
+    screen = app.pm_auto.addons.addons['oled']
+    screen.sleep = screen.wake = lambda: None
+    integration.games.sleeping = True
+    integration._apply_sleep()
+    assert fan.calls[-1] == {'gpio_fan_led': 'off'}
+    integration.games.sleeping = False
+    integration._apply_wake()
+    assert fan.calls[-1] == {'gpio_fan_led': 'on'}

@@ -217,6 +217,8 @@ class Integration:
     # ------------------------------------------------------------ fan LEDs
     def fan_led_value(self):
         """pm_auto value of the case fan LEDs for the gpio_fan_led setting."""
+        if self.games.sleeping and settings.get(self.system, 'sleep_sync'):
+            return 'off'  # EmulationStation screensaver
         mode = settings.get(self.system, 'gpio_fan_led')
         return mode if mode in FAN_LED_VALUES else 'on'
 
@@ -234,7 +236,7 @@ class Integration:
         self.in_loop(self._apply_wake)
 
     def _apply_sleep(self):
-        """EmulationStation screensaver: OLED and RGB LEDs off (not saved)."""
+        """EmulationStation screensaver: OLED, RGB and fan LEDs off (not saved)."""
         if not settings.get(self.system, 'sleep_sync'):
             return
         screen, leds = self.addon('oled'), self.addon('ws2812')
@@ -242,6 +244,7 @@ class Integration:
             screen.sleep()
         if leds is not None:
             leds.update_config({'rgb_enable': False})
+        self._apply_fan_led()
 
     def _apply_wake(self):
         screen, leds = self.addon('oled'), self.addon('ws2812')
@@ -250,6 +253,7 @@ class Integration:
             screen.last_page_index = -1
         if leds is not None:
             leds.update_config({'rgb_enable': self.system.get('rgb_enable', True)})
+        self._apply_fan_led()  # back to the saved on/off
 
     # ------------------------------------------------------------ games
     def _on_game_start(self, game):
