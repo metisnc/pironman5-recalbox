@@ -13,6 +13,8 @@ launcher adapts it at runtime:
 - disk usage is computed with psutil instead of lsblk
 - OLED pages rotate automatically (upstream only changes page with the
   power button)
+- Recalbox integration (pm5r): settings changed live from the Recalbox menu,
+  OLED confirmations, "now playing" page and LED color per console
 """
 import json
 import logging
@@ -140,29 +142,53 @@ def next_oled_page(app):
         app.pm_auto.event.publish('oled_wake_page_next')
 
 
-def start_oled_page_rotation(app):
+def page_interval(app):
     interval = app.config['system'].get('oled_page_interval', OLED_PAGE_INTERVAL_DEFAULT)
     if not isinstance(interval, (int, float)) or interval <= 0:
-        return
+        return None
+    return interval
 
+
+def stop_with_pm_auto(app, stop):
+    """Run stop() before PMAuto stops, so Pironman5.stop() finds no thread left."""
+    pm_auto_stop = app.pm_auto.stop
+
+    def stop_all():
+        stop()
+        pm_auto_stop()
+
+    app.pm_auto.stop = stop_all
+
+
+def start_oled_page_rotation(app):
     stopping = threading.Event()
 
     def rotate():
-        while not stopping.wait(interval):
-            next_oled_page(app)
+        # Interval read each time: it can be changed while running
+        while not stopping.wait(page_interval(app) or 1):
+            if page_interval(app):
+                next_oled_page(app)
 
     thread = threading.Thread(target=rotate, name='oled-page-rotation', daemon=True)
     thread.start()
 
-    # Stop with PMAuto, before Pironman5.stop() reports leftover threads
-    pm_auto_stop = app.pm_auto.stop
-
     def stop():
         stopping.set()
         thread.join()
-        pm_auto_stop()
 
-    app.pm_auto.stop = stop
+    stop_with_pm_auto(app, stop)
+
+
+def start_recalbox_integration(app, log):
+    """Live settings, OLED confirmations, game page and LED colors (pm5r)."""
+    from pm5r import oled
+    from pm5r.control import Integration
+
+    integration = Integration(app, log, config_path=CONFIG_PATH)
+    oled.install(integration.toast, lambda: integration.games.game)
+    integration.start()
+    stop_with_pm_auto(app, integration.stop)
+    return integration
 
 
 def main():
@@ -188,6 +214,7 @@ def main():
 
     app = service.Pironman5(config_path=CONFIG_PATH)
     start_oled_page_rotation(app)
+    start_recalbox_integration(app, service.log)
     app.start()
 
 

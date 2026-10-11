@@ -18,5 +18,7 @@ jobs:
         run: python -m py_compile recalbox/*.py pironman5/*.py pironman5/variants/*.py pironman5/variants/modules/*.py
       - name: Unit tests
         run: |
-          python -m pip install pytest
+          PM_AUTO_COMMIT=$(sed -n 's/^PM_AUTO_COMMIT="\([0-9a-f]*\)".*/\1/p' recalbox/install.sh)
+          python -m pip install pytest Pillow
+          python -m pip install --no-deps "git+https://github.com/sunfounder/pm_auto.git@${PM_AUTO_COMMIT}"
           python -m pytest -q recalbox/tests

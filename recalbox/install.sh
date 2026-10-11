@@ -128,6 +128,7 @@ rm -rf "$STAGE/lib/bin"
 cp -r "$SRC/pironman5" "$STAGE/app/"
 mkdir -p "$STAGE/app/recalbox"
 cp "$SRC/recalbox/"*.py "$SRC/recalbox/"*.sh "$SRC/recalbox/"*.txt "$SRC/recalbox/README.md" "$STAGE/app/recalbox/"
+cp -r "$SRC/recalbox/pm5r" "$STAGE/app/recalbox/"
 find "$STAGE" -name '__pycache__' -prune -exec rm -rf {} +
 echo "$(cd "$SRC" && (git rev-parse --short HEAD 2>/dev/null || echo "$PM5_REF")) $STAMP" > "$STAGE/app/.installed"
 
@@ -169,6 +170,11 @@ bash "$PM5_HOME/app/recalbox/pironman5-service.sh" "\$1"
 $MARK_END
 EOF
 fi
+
+# ------------------------------------------------------------------ menu
+# Entries in Recalbox menu > User scripts (named in the Recalbox language)
+log "Adding the Pironman entries to the Recalbox user scripts menu"
+python3 "$PM5_HOME/app/recalbox/pironman5ctl.py" install-scripts
 
 bash "$PM5_HOME/app/recalbox/pironman5-service.sh" start
 log "Installed in $PM5_HOME (backup: $BACKUP_DIR)"

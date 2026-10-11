@@ -54,7 +54,12 @@ if grep -qF "$MARK_BEGIN" "$CUSTOM_SH" 2>/dev/null; then
     fi
 fi
 
-# 3. Move the installation aside
+# 3. Remove the Recalbox menu entries (kept in the backup folder)
+if [ -f "$PM5_HOME/app/recalbox/pironman5ctl.py" ]; then
+    python3 "$PM5_HOME/app/recalbox/pironman5ctl.py" remove-scripts "$BACKUP_DIR/userscripts" || true
+fi
+
+# 4. Move the installation aside
 if [ -d "$PM5_HOME" ]; then
     mv "$PM5_HOME" "$BACKUP_DIR/pironman5"
     log "Moved $PM5_HOME to $BACKUP_DIR/pironman5"

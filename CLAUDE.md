@@ -26,6 +26,11 @@ S99custom → /recalbox/share/system/custom.sh → recalbox/pironman5-service.sh
               ├── FanAddon      (Pi 5 kernel fan level → case fans on GPIO6)
               ├── OLEDAddon     (SSD1306, I2C bus 1, 0x3C)
               └── WS2812Addon   (SPI0)
+        + pm5r.control.Integration (config.json watcher, ES game events,
+          OLED overlay and game page, LED color per system)
+
+Recalbox menu > User scripts → userscripts/manual/Pironman · *.sh
+  └── recalbox/pironman5ctl.py set <key> <json>  → config.json → service
 ```
 
 Installed in `/recalbox/share/pironman5` (`app/`, `lib/`, `config.json`,

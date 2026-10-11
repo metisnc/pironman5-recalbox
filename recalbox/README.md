@@ -15,6 +15,8 @@ adapted to Recalbox at runtime only.
 | `uninstall.sh` | Stop the service, remove the `custom.sh` block, move the installation to a backup folder |
 | `pironman5-service.sh` | `start` / `stop` / `restart` / `status`, called by `custom.sh` |
 | `pironman5_recalbox.py` | Launcher: runs `pironman5` with the Recalbox adaptations below |
+| `pironman5ctl.py` | Settings CLI, used by the Recalbox menu entries and over SSH |
+| `pm5r/` | Recalbox integration: live settings, menu entries, OLED overlay, game events |
 | `requirements-recalbox.txt` | Pinned wheels with hashes (CPython 3.11, aarch64) |
 | `build-offline-bundle.sh` | Downloads the wheels and the pinned `pm_auto` / `sf_rpi_status` sources |
 | `tests/` | Unit tests for the launcher (`python3 -m pytest recalbox/tests`) |
@@ -57,6 +59,29 @@ Pironman 5 HAT EEPROM, so no `config.txt` change is required.
 | Case fans | GPIO6 (BCM), on/off | `RPi.GPIO` API from `rpi-lgpio` / `lgpio` |
 | Raspberry Pi 5 fan | kernel `pwm-fan`, read from `/sys/class/thermal/cooling_device0` | — |
 | 4 × WS2812 LEDs | SPI0 MOSI (GPIO10), `/dev/spidev0.0` | Adafruit Blinka, `neopixel_spi` |
+
+## Recalbox integration (`pm5r/`)
+
+| Module | Role |
+|---|---|
+| `settings.py` | Cycled values, labels, translations (FR/EN from `system.language`), atomic `config.json` writes |
+| `menu.py` | Entries of *Menu > User scripts* (`/recalbox/share/userscripts/manual`), named after their result |
+| `control.py` | In the service: applies `config.json` changes live, OLED confirmations, game page and LED color |
+| `es_events.py` | Game start/stop from `/tmp/es_state.inf` (`rungame`, `endgame`…) |
+| `oled.py` | Wraps pm_auto's OLED pages (confirmation overlay) and adds the `game` page |
+| `colors.py` | LED color per manufacturer, from `systemlist.xml` |
+
+- EmulationStation lists `userscripts/manual/*.sh` when the submenu opens,
+  runs them with `/bin/sh`, and shows only the file name: it has no API for
+  custom notifications. Entry names therefore carry the result, apply an
+  explicit value (idempotent) and are renamed after every change. Only files
+  containing the marker `# pironman5-recalbox menu entry` are touched.
+- Names are a fixed part + ` → ` + result; fixed parts differ before the
+  arrow, so the alphabetical order of the menu never changes (tested).
+- `config.json` is polled every second; only changed keys are passed to
+  `Pironman5.update_config()`. Changes to the addons run in pm_auto's asyncio
+  loop (`call_soon_threadsafe`). Game colors are applied to the WS2812 addon
+  only, never saved.
 
 ## Updating dependencies
 
