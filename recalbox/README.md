@@ -47,6 +47,11 @@ adapted to Recalbox at runtime only.
 | Power button handled by Recalbox, no `evdev` | `pi5_power_button` peripheral removed; OLED pages rotate on a timer |
 | Games must keep priority | Service runs with `nice 10` |
 
+Case model: the Pironman 5 and Pironman 5 Max EEPROMs both read "Pironman 5",
+so `install.sh` asks (or takes `--variant base|max`) and writes
+`PM5_HOME/variant`; the launcher assembles that upstream product
+(`select_variant`), the Max adding the case fan LEDs on GPIO5.
+
 I2C1, SPI0 and the IR receiver are enabled by `sunfounder-pironman5.dtbo`,
 shipped by Recalbox in `/boot/overlays` and loaded by the firmware from the
 Pironman 5 HAT EEPROM, so no `config.txt` change is required.
@@ -57,6 +62,7 @@ Pironman 5 HAT EEPROM, so no `config.txt` change is required.
 |---|---|---|
 | SSD1306 OLED 128×64 | I2C bus 1, address `0x3C` | `smbus2`, Pillow (system) |
 | Case fans | GPIO6 (BCM), on/off | `RPi.GPIO` API from `rpi-lgpio` / `lgpio` |
+| Case fan LEDs (Max) | GPIO5 (BCM), on/off | same |
 | Raspberry Pi 5 fan | kernel `pwm-fan`, read from `/sys/class/thermal/cooling_device0` | — |
 | 4 × WS2812 LEDs | SPI0 MOSI (GPIO10), `/dev/spidev0.0` | Adafruit Blinka, `neopixel_spi` |
 
@@ -67,7 +73,7 @@ Pironman 5 HAT EEPROM, so no `config.txt` change is required.
 | `settings.py` | Cycled values, labels, translations (FR/EN from `system.language`), atomic `config.json` writes |
 | `menu.py` | Entries of *Menu > User scripts* (`/recalbox/share/userscripts/manual`), named after their result |
 | `control.py` | In the service: applies `config.json` changes live, OLED confirmations, game page and LED color |
-| `es_events.py` | Game start/stop from `/tmp/es_state.inf` (`rungame`, `endgame`…) |
+| `es_events.py` | Game start/stop and screensaver (`sleep`) from `/tmp/es_state.inf` |
 | `oled.py` | Wraps pm_auto's OLED pages (confirmation overlay) and adds the `game` page |
 | `colors.py` | LED color per manufacturer, from `systemlist.xml` |
 
@@ -82,6 +88,10 @@ Pironman 5 HAT EEPROM, so no `config.txt` change is required.
   `Pironman5.update_config()`. Changes to the addons run in pm_auto's asyncio
   loop (`call_soon_threadsafe`). Game colors are applied to the WS2812 addon
   only, never saved.
+- Case fan LEDs (Max, GPIO5): self-animated RGB fans, only powered on/off.
+  pm_auto starts them in `follow` whatever is saved;
+  `Integration._apply_fan_led()` applies the saved `on`/`off` once the
+  service runs and on each change (fan addon only).
 
 ## Updating dependencies
 

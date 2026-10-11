@@ -5,7 +5,8 @@
 Fait fonctionner les équipements du boîtier
 [SunFounder Pironman 5](https://www.sunfounder.com/) sous
 [Recalbox](https://www.recalbox.com/) : écran OLED d'état, ventilateurs du
-boîtier et LEDs RGB, sur Raspberry Pi 5.
+boîtier et LEDs RGB, sur Raspberry Pi 5. Pironman 5 et Pironman 5 Max sont
+pris en charge.
 
 L'installateur officiel du Pironman 5 vise Raspberry Pi OS (apt, systemd,
 environnement virtuel dans `/opt`, InfluxDB) et ne peut pas fonctionner sous
@@ -39,6 +40,8 @@ système, et résiste aux redémarrages comme aux mises à jour de Recalbox.
 | Menu Recalbox | LEDs, ventilateurs et écran se règlent depuis *Menu > Scripts utilisateur*, appliqués aussitôt et confirmés sur l'OLED |
 | Couleur par système | Pendant une partie, les LEDs prennent la couleur du constructeur de la console (Nintendo rouge, Sega bleu…) |
 | Ventilateurs du boîtier | Suivent le ventilateur du Raspberry Pi 5 : allumés à partir d'environ 50 °C par défaut, cinq modes disponibles |
+| LEDs des ventilateurs (Max) | Allumées ou éteintes depuis le menu Recalbox (elles ont leur propre effet de couleur) |
+| Veille synchronisée | L'OLED et les LEDs RGB s'éteignent pendant l'écran de veille d'EmulationStation |
 | LEDs RGB | 4 LEDs WS2812 : fixe, respiration, défilement, arc-en-ciel, cycle de teinte ; couleur, luminosité et vitesse réglables |
 | Ventilateur du Raspberry Pi 5 | Laissé au pilote du noyau Recalbox, comme sur un système d'origine |
 | Empreinte | Environ 2 % d'un cœur CPU et 30 Mo de RAM, en priorité basse pour laisser la main aux jeux |
@@ -49,9 +52,9 @@ système, et résiste aux redémarrages comme aux mises à jour de Recalbox.
 |---|---|
 | Recalbox | 11.0 (testé sur `11.0-patron-1.1`) |
 | Carte | Raspberry Pi 5 |
-| Boîtier | Pironman 5 |
+| Boîtier | Pironman 5, Pironman 5 Max |
 
-Non pris en charge : Pironman 5 Mini, Max, Pro Max et NAS, autres modèles de
+Non pris en charge : Pironman 5 Mini, Pro Max et NAS, autres modèles de
 Raspberry Pi.
 
 ## Installation
@@ -74,6 +77,12 @@ Connectez-vous à la Recalbox en SSH et lancez :
 ```bash
 wget -qO- https://raw.githubusercontent.com/metisnc/pironman5-recalbox/main-pr5-rc/recalbox/install.sh | bash
 ```
+
+L'installateur demande le modèle de boîtier (les deux se présentent comme
+« Pironman 5 » dans leur EEPROM) : tapez `1` pour le Pironman 5 ou `2` pour
+le Pironman 5 Max, puis confirmez. Pour ne pas avoir la question, ajoutez
+`-s -- --variant base` ou `-s -- --variant max` après `bash`. Lors d'une mise
+à jour, le modèle déjà installé est proposé par défaut.
 
 Le service démarre aussitôt : l'écran OLED, les LEDs RGB et les ventilateurs
 du boîtier s'allument en quelques secondes.
@@ -121,7 +130,9 @@ la valeur actuelle entre parenthèses et le résultat qu'elle produit :
 | `Pironman · LEDs · luminosité (25 %) → 50 %` | 25, 50, 75 ou 100 % |
 | `Pironman · LEDs · selon le système → activer` | couleur des LEDs selon le constructeur pendant les parties |
 | `Pironman · LEDs · style (défilement) → arc-en-ciel` | fixe, respiration, défilement, arc-en-ciel, cycle de couleurs |
+| `Pironman · Ventilateurs · LEDs → éteindre` | allume ou éteint les LEDs des ventilateurs (Max uniquement) |
 | `Pironman · Ventilateurs · mode (performance) → frais` | toujours, performance, frais, équilibré, silencieux |
+| `Pironman · Veille · synchronisation → désactiver` | OLED et LEDs éteints pendant l'écran de veille d'EmulationStation |
 | `Pironman · Écran · allumage → éteindre` | allume ou éteint l'écran OLED |
 
 Les changements s'appliquent immédiatement et sont enregistrés. L'OLED
@@ -167,6 +178,8 @@ redémarrer le service.
 | `gpio_fan_mode` | ventilateurs du boîtier : `0` toujours allumés, `1` performance, `2` frais, `3` équilibré, `4` silencieux | `1` |
 | `oled_game_page` | `true`, `false` : page En jeu pendant les parties | `true` |
 | `rgb_system_colors` | `true`, `false` : couleur des LEDs selon le constructeur pendant les parties | `true` |
+| `sleep_sync` | `true`, `false` : OLED et LEDs RGB éteints pendant l'écran de veille | `true` |
+| `gpio_fan_led` | `on`, `off` : LEDs des ventilateurs (Max) | `on` |
 | `debug_level` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 
 `gpio_fan_mode` fixe le niveau du ventilateur du Raspberry Pi 5 à partir
@@ -238,6 +251,8 @@ plus tant qu'une version adaptée de ce projet n'aura pas été installée.
 - Le bouton d'alimentation du Raspberry Pi 5 reste géré par Recalbox : les
   pages de l'OLED défilent automatiquement au lieu de changer avec le bouton.
 - Les températures des disques ne sont pas affichées.
+- Les LEDs des ventilateurs du Pironman 5 Max ont leur propre effet de couleur :
+  on peut les allumer ou les éteindre, pas leur imposer une couleur.
 - EmulationStation ne sait pas afficher de notification personnalisée : les
   noms des entrées du menu portent l'information, et se mettent à jour à la
   réouverture de *Scripts utilisateur*.

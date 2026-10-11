@@ -10,6 +10,7 @@ GAME_START = {'rungame', 'rundemo'}
 # Browsing actions also end a game, in case an endgame event was missed
 GAME_END = {'endgame', 'enddemo', 'stop', 'quit', 'shutdown', 'reboot',
             'gamelistbrowsing', 'systembrowsing'}
+SLEEP = 'sleep'  # screensaver; any later action means awake again
 
 
 def parse_state(content):
@@ -42,15 +43,20 @@ class Game:
 
 
 class GameWatcher:
-    """Calls on_start(Game) / on_end() when a game starts or stops."""
+    """Calls on_start(Game) / on_end() when a game starts or stops, and
+    on_sleep() / on_wake() around the EmulationStation screensaver."""
 
-    def __init__(self, on_start, on_end, log, path=ES_STATE, interval=0.5):
+    def __init__(self, on_start, on_end, log, path=ES_STATE, interval=0.5,
+                 on_sleep=None, on_wake=None):
         self.on_start = on_start
         self.on_end = on_end
+        self.on_sleep = on_sleep or (lambda: None)
+        self.on_wake = on_wake or (lambda: None)
         self.log = log
         self.path = path
         self.interval = interval
         self.game = None
+        self.sleeping = False
         self._mtime = None
         self._stopping = threading.Event()
         self._thread = threading.Thread(target=self._run, name='es-events', daemon=True)
@@ -72,6 +78,15 @@ class GameWatcher:
         self._mtime = mtime
         state = read_state(self.path)
         action = state.get('Action', '')
+        if action == SLEEP and not self.sleeping:
+            self.sleeping = True
+            self.log.info('EmulationStation screensaver started')
+            self.on_sleep()
+        elif action != SLEEP and self.sleeping:
+            # wakeup, or any other action: EmulationStation is awake again
+            self.sleeping = False
+            self.log.info('EmulationStation woke up')
+            self.on_wake()
         if action in GAME_START and self.game is None:
             self.game = Game(state)
             self.log.info('Game started: %s / %s', self.game.system, self.game.title)

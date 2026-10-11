@@ -52,7 +52,13 @@ def test_menu_entries_name_the_result():
     assert entries['LEDs · selon le système → désactiver'][2] == 'false'
     assert entries['Ventilateurs · mode (performance) → frais'] == ['set', 'gpio_fan_mode', '2']
     assert entries['Écran · allumage → éteindre'] == ['set', 'oled_enable', 'false']
-    assert len(entries) == 7
+    assert entries['Veille · synchronisation → désactiver'] == ['set', 'sleep_sync', 'false']
+    assert len(entries) == 8  # no fan LED entry on a Pironman 5
+    max_entries = menu.entries(dict(system, gpio_fan_led='follow'), 'fr', 'max')
+    assert max_entries['Ventilateurs · LEDs → éteindre'] == ['set', 'gpio_fan_led', '"off"']
+    off_entries = menu.entries(dict(system, gpio_fan_led='off'), 'fr', 'max')
+    assert off_entries['Ventilateurs · LEDs → allumer'] == ['set', 'gpio_fan_led', '"on"']
+    assert len(max_entries) == 9
     for lang in ('fr', 'en'):
         for name in menu.entries(system, lang):
             assert not set(name) & set('"*/:<>?\\|')  # valid exFAT file names
@@ -67,6 +73,7 @@ def _all_states():
     for key in menu.TOGGLED:
         for value in (True, False):
             states.append({key: value})
+    states += [{'gpio_fan_led': 'on'}, {'gpio_fan_led': 'off'}]
     return states
 
 
@@ -79,11 +86,11 @@ def _loose(name):
 
 def test_menu_order_never_changes():
     from pm5r import menu
-    for lang in ('fr', 'en'):
+    for lang, variant in (('fr', 'base'), ('en', 'base'), ('fr', 'max'), ('en', 'max')):
         for collate in (str, _loose):
             orders = set()
             for state in _all_states():
-                names = sorted(menu.entries(state, lang), key=collate)
+                names = sorted(menu.entries(state, lang, variant), key=collate)
                 orders.add(tuple(name.split(' (')[0].split(menu.ARROW)[0] for name in names))
             assert len(orders) == 1, (lang, collate, orders)
 
@@ -184,7 +191,7 @@ def test_ctl_menu_entries_install_rename_remove(ctl):
     (manual / 'someone else.sh').write_text('#!/bin/sh\necho hi\n')
     assert pironman5ctl.main(['install-scripts']) == 0
     ours = sorted(n for n in os.listdir(manual) if n.startswith('Pironman · '))
-    assert len(ours) == 7
+    assert len(ours) == 8
     assert 'Pironman · LEDs · style (fixe) → respiration.sh' in ours
     body = (manual / 'Pironman · LEDs · style (fixe) → respiration.sh').read_text()
     assert "'set' 'rgb_style' '\"breathing\"'" in body
@@ -193,10 +200,10 @@ def test_ctl_menu_entries_install_rename_remove(ctl):
     names = os.listdir(manual)
     assert 'Pironman · LEDs · style (respiration) → défilement.sh' in names
     assert 'Pironman · LEDs · style (fixe) → respiration.sh' not in names
-    assert len([n for n in names if n.startswith('Pironman')]) == 7
+    assert len([n for n in names if n.startswith('Pironman')]) == 8
     assert pironman5ctl.main(['remove-scripts', str(tmp_path / 'backup')]) == 0
     assert os.listdir(manual) == ['someone else.sh']
-    assert len(os.listdir(tmp_path / 'backup')) == 7
+    assert len(os.listdir(tmp_path / 'backup')) == 8
 
 
 def test_ctl_set_does_not_create_menu_entries_when_not_installed(ctl):
@@ -314,3 +321,70 @@ def test_integration_game_color_and_page(tmp_path, monkeypatch):
     integration._game_ended()
     assert leds.calls[-1] == {'rgb_color': '#ffffff', 'rgb_style': 'rainbow'}
     assert screen.calls[-1] == ('pages', ['mix'])
+
+
+def test_variant_file(tmp_path):
+    assert settings.variant(str(tmp_path)) == 'base'  # no file
+    (tmp_path / 'variant').write_text('max\n')
+    assert settings.variant(str(tmp_path)) == 'max'
+    (tmp_path / 'variant').write_text('pro_max')
+    assert settings.variant(str(tmp_path)) == 'base'  # unsupported on Recalbox
+
+
+def test_watcher_sleep_and_wake(tmp_path):
+    path = tmp_path / 'es_state.inf'
+    events = []
+    log = types.SimpleNamespace(info=lambda *a: None, exception=lambda *a: None)
+    watcher = GameWatcher(lambda g: None, lambda: None, log, path=str(path),
+                          on_sleep=lambda: events.append('sleep'),
+                          on_wake=lambda: events.append('wake'))
+    for i, action in enumerate(['systembrowsing', 'sleep', 'sleep', 'wakeup', 'systembrowsing']):
+        path.write_text(f'Action={action}\n')
+        os.utime(path, (i, i))
+        watcher.poll()
+    assert events == ['sleep', 'wake']
+
+
+def test_integration_sleep_turns_oled_and_leds_off(tmp_path, monkeypatch):
+    integration, app, _, _, leds, screen = make_integration(tmp_path, monkeypatch)
+    screen.sleep = lambda: screen.calls.append('sleep')
+    screen.wake = lambda: screen.calls.append('wake')
+    integration._apply_sleep()
+    assert screen.calls == ['sleep'] and leds.calls == [{'rgb_enable': False}]
+    integration._apply_wake()
+    assert screen.calls[-1] == 'wake' and leds.calls[-1] == {'rgb_enable': True}
+    app.config['system']['sleep_sync'] = False
+    screen.calls.clear()
+    integration._apply_sleep()
+    assert screen.calls == []
+
+
+def test_launcher_selects_max_variant():
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))  # pironman5/
+    import pironman5_recalbox as launcher
+    from pironman5 import variants
+    try:
+        launcher.select_variant(variants, 'max')
+        assert variants.NAME == 'Pironman 5 Max'
+        assert 'gpio_fan_led' in variants.PERIPHERALS
+        assert variants.SYSTEM_DEFAULT_CONFIG['gpio_fan_led'] == 'follow'
+    finally:
+        launcher.select_variant(variants, 'base')
+    assert 'gpio_fan_led' not in variants.PERIPHERALS
+
+
+def test_fan_led_on_off(tmp_path, monkeypatch):
+    integration, app, config, updates, _, _ = make_integration(tmp_path, monkeypatch)
+    fan = FakeAddon()
+    app.pm_auto.addons.addons['fan'] = fan
+    app.peripherals = ['gpio_fan_state', 'gpio_fan_led']
+    integration.restart_only.discard('gpio_fan_led')
+    data = json.loads(config.read_text())
+    data['system']['gpio_fan_led'] = 'off'
+    config.write_text(json.dumps(data))
+    os.utime(config, (40, 40))
+    integration.poll()
+    assert updates == []  # sent to the fan addon only
+    assert fan.calls == [{'gpio_fan_led': 'off'}]
+    app.config['system']['gpio_fan_led'] = 'rgb'  # old value: treated as on
+    assert integration.fan_led_value() == 'on'

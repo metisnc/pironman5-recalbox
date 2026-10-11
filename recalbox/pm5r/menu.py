@@ -31,6 +31,8 @@ NAMES = {
         'rgb_system_colors': ('LEDs · selon le système', 'activer', 'désactiver'),
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Ventilateurs · mode',
+        'gpio_fan_led': ('Ventilateurs · LEDs', 'allumer', 'éteindre'),
+        'sleep_sync': ('Veille · synchronisation', 'activer', 'désactiver'),
         'oled_enable': ('Écran · allumage', 'allumer', 'éteindre'),
     },
     'en': {
@@ -40,15 +42,17 @@ NAMES = {
         'rgb_system_colors': ('LEDs · per system', 'enable', 'disable'),
         'rgb_style': 'LEDs · style',
         'gpio_fan_mode': 'Case fans · mode',
+        'gpio_fan_led': ('Case fans · LEDs', 'turn on', 'turn off'),
+        'sleep_sync': ('Screensaver · sync', 'enable', 'disable'),
         'oled_enable': ('Screen · power', 'turn on', 'turn off'),
     },
 }
 ARROW = ' → '
 CYCLED = ['rgb_style', 'rgb_color', 'rgb_brightness', 'gpio_fan_mode']
-TOGGLED = ['rgb_enable', 'rgb_system_colors', 'oled_enable']
+TOGGLED = ['rgb_enable', 'rgb_system_colors', 'oled_enable', 'sleep_sync']
 
 
-def entries(system, lang):
+def entries(system, lang, variant='base'):
     """{menu name: pironman5ctl arguments} for the current settings."""
     names = NAMES.get(lang, NAMES['en'])
     result = {}
@@ -64,6 +68,12 @@ def entries(system, lang):
         current = bool(settings.get(system, key))
         result[fixed + ARROW + (turn_off if current else turn_on)] = \
             ['set', key, json.dumps(not current)]
+    if variant in settings.FAN_LED_VARIANTS:
+        # Case fan LEDs (Max): on/off only, their colors cannot be driven
+        fixed, turn_on, turn_off = names['gpio_fan_led']
+        lit = settings.get(system, 'gpio_fan_led') != 'off'
+        result[fixed + ARROW + (turn_off if lit else turn_on)] = \
+            ['set', 'gpio_fan_led', json.dumps('off' if lit else 'on')]
     return result
 
 
@@ -87,7 +97,7 @@ def installed(directory=MANUAL_SCRIPTS):
             if is_ours(os.path.join(directory, name))]
 
 
-def refresh(system, lang, directory=MANUAL_SCRIPTS, create=False):
+def refresh(system, lang, directory=MANUAL_SCRIPTS, create=False, variant=None):
     """Rename the entries to match the settings.
 
     Only touches files carrying MARKER. Does nothing unless entries are
@@ -97,8 +107,9 @@ def refresh(system, lang, directory=MANUAL_SCRIPTS, create=False):
     if not current and not create:
         return 0
     os.makedirs(directory, exist_ok=True)
+    variant = variant or settings.variant()
     wanted = {f'{PREFIX}{name}.sh': script_body(args)
-              for name, args in entries(system, lang).items()}
+              for name, args in entries(system, lang, variant).items()}
     for name in current:
         if name not in wanted:
             os.remove(os.path.join(directory, name))
